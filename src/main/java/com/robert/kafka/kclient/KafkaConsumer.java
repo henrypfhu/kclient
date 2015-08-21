@@ -21,9 +21,30 @@ import kafka.utils.VerifiableProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KafkaConsumerClient {
-	private static Logger log = LoggerFactory
-			.getLogger(KafkaConsumerClient.class);
+/**
+ * This is a consumer client which can be started easily by the startup method
+ * and stopped by the shutdownGracefully method.
+ * 
+ * <p>
+ * There are 2 types of MessageRunner internally. One is
+ * {@link SequentialMessageRunner} while the other is
+ * {@link ConcurrentMessageRunner}. The former uses single thread for a single
+ * stream, but the later uses a thread pool for a single stream asynchronously.
+ * The former is applied when the business handler is light weight. However, the
+ * later is applied when the business handler is heavy weight.
+ * 
+ * <p>
+ * The {@link KafkaConsumer} implements the gracefully shutdown by thread
+ * control in which case the thread will finish handling the messages which it
+ * is working on although the JVM attempts to exit.
+ *
+ * 
+ * @author Robert Lee
+ * @since Aug 21, 2015
+ *
+ */
+public class KafkaConsumer {
+	protected static Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
 
 	private Properties properties;
 	private MessageExecutor executor;
@@ -45,8 +66,15 @@ public class KafkaConsumerClient {
 
 	private CountDownLatch exitLatch;
 
-	public KafkaConsumerClient(String propertiesFile, MessageExecutor executor,
+	private int threadNum;
+
+	public KafkaConsumer(String propertiesFile, MessageExecutor executor,
 			String topic, int streamNum) {
+		this(propertiesFile, executor, topic, streamNum, 0);
+	}
+
+	public KafkaConsumer(String propertiesFile, MessageExecutor executor,
+			String topic, int streamNum, int threadNum) {
 		properties = new Properties();
 		try {
 			properties.load(Thread.currentThread().getContextClassLoader()
@@ -60,18 +88,25 @@ public class KafkaConsumerClient {
 		this.executor = executor;
 		this.topic = topic;
 		this.streamNum = streamNum;
+		this.threadNum = 0;
 
 		initKafka();
 		initGracefullyShutdown();
 	}
 
-	public KafkaConsumerClient(Properties properties, MessageExecutor executor,
+	public KafkaConsumer(Properties properties, MessageExecutor executor,
 			String topic, int streamNum) {
+		this(properties, executor, topic, streamNum, 0);
+	}
+
+	public KafkaConsumer(Properties properties, MessageExecutor executor,
+			String topic, int streamNum, int threadNum) {
 		this.properties = properties;
 
 		this.executor = executor;
 		this.topic = topic;
 		this.streamNum = streamNum;
+		this.threadNum = threadNum;
 
 		initGracefullyShutdown();
 		initKafka();
@@ -127,7 +162,9 @@ public class KafkaConsumerClient {
 
 		log.info("Streams num: " + streams.size());
 		for (KafkaStream<String, String> stream : streams) {
-			threadPool.execute(new MessageRunner(stream, executor));
+			threadPool.execute(threadNum == 0 ? new SequentialMessageRunner(
+					stream, executor) : new ConcurrentMessageRunner(stream,
+					executor, threadNum));
 		}
 
 		status = Status.RUNNING;
@@ -162,12 +199,12 @@ public class KafkaConsumerClient {
 		status = Status.STOPPED;
 	}
 
-	public String getTopic() {
-		return topic;
+	public Properties getProperties() {
+		return properties;
 	}
 
-	public void setTopic(String topic) {
-		this.topic = topic;
+	public void setProperties(Properties properties) {
+		this.properties = properties;
 	}
 
 	public MessageExecutor getExecutor() {
@@ -178,20 +215,40 @@ public class KafkaConsumerClient {
 		this.executor = executor;
 	}
 
-	public ConsumerConnector getConsumerConnector() {
-		return consumerConnector;
+	public String getTopic() {
+		return topic;
 	}
 
-	public List<KafkaStream<String, String>> getPartitions() {
-		return streams;
+	public void setTopic(String topic) {
+		this.topic = topic;
 	}
 
-	class MessageRunner implements Runnable {
+	public int getStreamNum() {
+		return streamNum;
+	}
+
+	public void setStreamNum(int streamNum) {
+		this.streamNum = streamNum;
+	}
+
+	public int getThreadNum() {
+		return threadNum;
+	}
+
+	public void setThreadNum(int threadNum) {
+		this.threadNum = threadNum;
+	}
+
+	public Status getStatus() {
+		return status;
+	}
+
+	class SequentialMessageRunner implements Runnable {
 		private KafkaStream<String, String> partition;
 
 		private MessageExecutor messageExecutor;
 
-		MessageRunner(KafkaStream<String, String> partition,
+		SequentialMessageRunner(KafkaStream<String, String> partition,
 				MessageExecutor messageExecutor) {
 			this.partition = partition;
 			this.messageExecutor = messageExecutor;
@@ -218,4 +275,47 @@ public class KafkaConsumerClient {
 			exitLatch.countDown();
 		}
 	}
+
+	class ConcurrentMessageRunner implements Runnable {
+		private KafkaStream<String, String> partition;
+
+		private MessageExecutor messageExecutor;
+
+		private ExecutorService threadPool;
+
+		ConcurrentMessageRunner(KafkaStream<String, String> partition,
+				MessageExecutor messageExecutor, int threadNum) {
+			this.partition = partition;
+			this.messageExecutor = messageExecutor;
+
+			threadPool = Executors.newFixedThreadPool(threadNum);
+		}
+
+		public void run() {
+			ConsumerIterator<String, String> it = partition.iterator();
+			while (status == Status.RUNNING) {
+				if (it.hasNext()) {
+					// TODO if error, how to handle, continue or throw exception
+					final MessageAndMetadata<String, String> item = it.next();
+					log.debug("partiton[" + item.partition() + "] offset["
+							+ item.offset() + "] message[" + item.message()
+							+ "]");
+
+					threadPool.submit(new Runnable() {
+						public void run() {
+							// if it blows, how to recover
+							messageExecutor.execute(item.message());
+						}
+					});
+
+					// if not auto commit, commit it manually
+					if (!isAutoCommitOffset) {
+						consumerConnector.commitOffsets();
+					}
+				}
+			}
+			exitLatch.countDown();
+		}
+	}
+
 }
