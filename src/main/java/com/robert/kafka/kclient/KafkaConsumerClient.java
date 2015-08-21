@@ -1,9 +1,11 @@
 package com.robert.kafka.kclient;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,132 +18,148 @@ import kafka.message.MessageAndMetadata;
 import kafka.serializer.StringDecoder;
 import kafka.utils.VerifiableProperties;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KafkaConsumerClient {
-	private static Logger logger = Logger.getLogger(KafkaConsumerClient.class);
-	private String propertyFile = "kafka-consumer.properties";// 配置文件位置
-	private String topic;
-	private int partitionsNum;
+	private static Logger log = LoggerFactory
+			.getLogger(KafkaConsumerClient.class);
 
-	private MessageExecutor executor; // message listener
+	private Properties properties;
+	private MessageExecutor executor;
+	private String topic;
+	private int streamNum;
+
 	private ExecutorService threadPool;
 
 	private ConsumerConnector consumerConnector;
-	private List<KafkaStream<String, String>> partitions;
-	protected volatile boolean running = false;
-	protected volatile boolean isWorking = false;
+
+	private List<KafkaStream<String, String>> streams;
 	private boolean isAutoCommitOffset = true;
 
-	/**
-	 * 
-	 * @param propertyFile
-	 *            配置文件
-	 * @param executor
-	 *            消费回调函数
-	 * @param topic
-	 *            消费的topic
-	 * @param partitionsNum
-	 *            partition的数量，如果不知道，就写一个你期望的处理线程数，因为设的比partitionsNum小，
-	 *            也会消费所有的partitions，设的多了，最多多出来的线程打酱油，我建议最好和partitionsNum相等
-	 */
-	public KafkaConsumerClient(String propertyFile, MessageExecutor executor,
-			String topic, int partitionsNum) {
-		this();
-		if (propertyFile != null) {
-			this.propertyFile = propertyFile;
+	enum Status {
+		INIT, RUNNING, STOPPING, STOPPED;
+	};
+
+	private volatile Status status = Status.INIT;
+
+	private CountDownLatch exitLatch;
+
+	public KafkaConsumerClient(String propertiesFile, MessageExecutor executor,
+			String topic, int streamNum) {
+		properties = new Properties();
+		try {
+			properties.load(Thread.currentThread().getContextClassLoader()
+					.getResourceAsStream(propertiesFile));
+		} catch (IOException e) {
+			log.error("The properties file is not loaded.", e);
+			throw new IllegalArgumentException(
+					"The properties file is not loaded.", e);
 		}
+
 		this.executor = executor;
 		this.topic = topic;
-		this.partitionsNum = partitionsNum;
+		this.streamNum = streamNum;
 
+		initKafka();
+		initGracefullyShutdown();
 	}
 
-	public KafkaConsumerClient() {
-		// 添加钩子，防止重启导致数据还没处理完
-		Runtime.getRuntime().addShutdownHook(new Thread() {
+	public KafkaConsumerClient(Properties properties, MessageExecutor executor,
+			String topic, int streamNum) {
+		this.properties = properties;
 
+		this.executor = executor;
+		this.topic = topic;
+		this.streamNum = streamNum;
+
+		initGracefullyShutdown();
+		initKafka();
+	}
+
+	public void initGracefullyShutdown() {
+		// for graceful shutdown
+		exitLatch = new CountDownLatch(streamNum);
+
+		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				try {
-					running = false;
-					while (isWorking) {
-						Thread.sleep(100);
-					}
-				} catch (Exception e) {
-					logger.error("Thread.sleep occour error", e);
-				}
+				shutdownGracefully();
 			}
 		});
 	}
 
-	// init consumer,and start connection and listener
-	public void init() throws Exception {
+	public void initKafka() {
 		if (executor == null) {
-			throw new RuntimeException("KafkaConsumer,exectuor cant be null!");
+			log.error("Exectuor can't be null!");
+			throw new RuntimeException("Exectuor can't be null!");
 		}
-		Properties properties = new Properties();
-		properties.load(Thread.currentThread().getContextClassLoader()
-				.getResourceAsStream(propertyFile));
-		logger.info("Consumer properties:" + properties);
+
+		log.info("Consumer properties:" + properties);
 		ConsumerConfig config = new ConsumerConfig(properties);
+
 		isAutoCommitOffset = config.autoCommitEnable();
 		consumerConnector = Consumer.createJavaConsumerConnector(config);
+
 		Map<String, Integer> topics = new HashMap<String, Integer>();
-		topics.put(topic, partitionsNum);
+		topics.put(topic, streamNum);
 		StringDecoder keyDecoder = new StringDecoder(new VerifiableProperties());
 		StringDecoder valueDecoder = new StringDecoder(
 				new VerifiableProperties());
-		Map<String, List<KafkaStream<String, String>>> streams = consumerConnector
+		Map<String, List<KafkaStream<String, String>>> streamsMap = consumerConnector
 				.createMessageStreams(topics, keyDecoder, valueDecoder);
-		partitions = streams.get(topic);
 
+		streams = streamsMap.get(topic);
+		log.info("Partitions:" + streams);
+
+		if (streams == null || streams.isEmpty()) {
+			log.error("Partions are empty.");
+			throw new IllegalArgumentException("Partions are empty.");
+		}
+
+		threadPool = Executors.newFixedThreadPool(streamNum);
 	}
 
-	public void start() {
-		running = true;
-		try {
-			init();
-		} catch (Exception e) {
-			logger.error("init error", e);
+	public void startup() {
+		if (status != Status.INIT) {
+			log.error("The client has been started.");
+			throw new IllegalStateException("The client has been started.");
 		}
-		if (partitions == null || partitions.isEmpty()) {
-			return;
+
+		log.info("Streams num: " + streams.size());
+		for (KafkaStream<String, String> stream : streams) {
+			threadPool.execute(new MessageRunner(stream, executor));
 		}
-		logger.info("partitions num:" + partitions.size());
-		if (threadPool != null) {
+
+		status = Status.RUNNING;
+	}
+
+	private void shutdownGracefully() {
+		status = Status.STOPPING;
+
+		boolean suspiciousWakeup = false;
+
+		while (true) {
 			try {
-				threadPool.shutdownNow();
-			} catch (Exception e) {
-				logger.error("threadPool.shutdownNow() error", e);
+				exitLatch.await();
+			} catch (InterruptedException e) {
+				suspiciousWakeup = true;
 			}
-		}
-		threadPool = Executors.newFixedThreadPool(partitionsNum);
 
-		// start
-		for (KafkaStream<String, String> partition : partitions) {
-			threadPool.execute(new MessageRunner(partition));
-		}
-	}
+			// If not suspicious wakeup, then exit
+			if (!suspiciousWakeup)
+				break;
 
-	public void close() {
-		try {
-			// 关闭前保证消费完
-			running = false;
-			while (isWorking) {
-				Thread.sleep(100);
-			}
-			threadPool.shutdownNow();
-		} catch (Exception e) {
-			logger.error("close() error", e);
-		} finally {
-			if (consumerConnector != null) {
-				consumerConnector.shutdown();
-			}
+			suspiciousWakeup = false;
 		}
-	}
 
-	public void setLocation(String location) {
-		this.propertyFile = location;
+		// Since the threads stop handling message, just force it to shutdown
+		threadPool.shutdownNow();
+
+		if (consumerConnector != null) {
+			consumerConnector.shutdown();
+		}
+
+		status = Status.STOPPED;
 	}
 
 	public String getTopic() {
@@ -150,18 +168,6 @@ public class KafkaConsumerClient {
 
 	public void setTopic(String topic) {
 		this.topic = topic;
-	}
-
-	public int getPartitionsNum() {
-		return partitionsNum;
-	}
-
-	public void setPartitionsNum(int partitionsNum) {
-		this.partitionsNum = partitionsNum;
-	}
-
-	public String getLocation() {
-		return propertyFile;
 	}
 
 	public MessageExecutor getExecutor() {
@@ -177,89 +183,39 @@ public class KafkaConsumerClient {
 	}
 
 	public List<KafkaStream<String, String>> getPartitions() {
-		return partitions;
-	}
-
-	public boolean isRunning() {
-		return running;
-	}
-
-	public void setRunning(boolean running) {
-		this.running = running;
-	}
-
-	public boolean isWorking() {
-		return isWorking;
-	}
-
-	public void setWorking(boolean isWorking) {
-		this.isWorking = isWorking;
+		return streams;
 	}
 
 	class MessageRunner implements Runnable {
 		private KafkaStream<String, String> partition;
 
-		MessageRunner(KafkaStream<String, String> partition) {
+		private MessageExecutor messageExecutor;
+
+		MessageRunner(KafkaStream<String, String> partition,
+				MessageExecutor messageExecutor) {
 			this.partition = partition;
+			this.messageExecutor = messageExecutor;
 		}
 
 		public void run() {
 			ConsumerIterator<String, String> it = partition.iterator();
-			while (running) {
-				try {
-					if (it.hasNext()) {
-						// 手动提交offset,当autocommit.enable=false时使用
-						try {
-							isWorking = true;
-							MessageAndMetadata<String, String> item = it.next();
-							logger.info("partiton[" + item.partition()
-									+ "] offset[" + item.offset()
-									+ "] message[" + item.message() + "]");
-							executor.execute(item.message());
-							// 如果不是自动提交，就每消费完一个就提交一次offset
-							if (!isAutoCommitOffset) {
-								consumerConnector.commitOffsets();
-							}
+			while (status == Status.RUNNING) {
+				if (it.hasNext()) {
+					// TODO if error, how to handle, continue or throw exception
+					MessageAndMetadata<String, String> item = it.next();
+					log.debug("partiton[" + item.partition() + "] offset["
+							+ item.offset() + "] message[" + item.message()
+							+ "]");
 
-						} catch (Exception e) {
-							logger.error("single message handle error", e);
-						} finally {
-							isWorking = false;
-						}
+					messageExecutor.execute(item.message());
+
+					// if not auto commit, commit it manually
+					if (!isAutoCommitOffset) {
+						consumerConnector.commitOffsets();
 					}
-				} catch (Exception e) {
-					logger.error("message handle error", e);
 				}
 			}
+			exitLatch.countDown();
 		}
-
 	}
-
-	public interface MessageExecutor {
-
-		public void execute(String message);
-	}
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		KafkaConsumerClient consumer = null;
-		try {
-			MessageExecutor executor = new MessageExecutor() {
-
-				public void execute(String message) {
-					System.out.println(Thread.currentThread().getId() + ":"
-							+ message);
-				}
-			};
-			consumer = new KafkaConsumerClient(
-					"kafka-consumer-demo.properties", executor, "swx", 3);
-			consumer.start();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
-
 }
