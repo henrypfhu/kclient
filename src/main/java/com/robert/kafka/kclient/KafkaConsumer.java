@@ -144,11 +144,11 @@ public class KafkaConsumer {
 				.createMessageStreams(topics, keyDecoder, valueDecoder);
 
 		streams = streamsMap.get(topic);
-		log.info("Partitions:" + streams);
+		log.info("Streams:" + streams);
 
 		if (streams == null || streams.isEmpty()) {
-			log.error("Partions are empty.");
-			throw new IllegalArgumentException("Partions are empty.");
+			log.error("Streams are empty.");
+			throw new IllegalArgumentException("Streams are empty.");
 		}
 
 		threadPool = Executors.newFixedThreadPool(streamNum);
@@ -244,23 +244,23 @@ public class KafkaConsumer {
 	}
 
 	class SequentialMessageRunner implements Runnable {
-		private KafkaStream<String, String> partition;
+		private KafkaStream<String, String> stream;
 
 		private MessageExecutor messageExecutor;
 
-		SequentialMessageRunner(KafkaStream<String, String> partition,
+		SequentialMessageRunner(KafkaStream<String, String> stream,
 				MessageExecutor messageExecutor) {
-			this.partition = partition;
+			this.stream = stream;
 			this.messageExecutor = messageExecutor;
 		}
 
 		public void run() {
-			ConsumerIterator<String, String> it = partition.iterator();
+			ConsumerIterator<String, String> it = stream.iterator();
 			while (status == Status.RUNNING) {
 				if (it.hasNext()) {
 					// TODO if error, how to handle, continue or throw exception
 					MessageAndMetadata<String, String> item = it.next();
-					log.debug("partiton[" + item.partition() + "] offset["
+					log.debug("partition[" + item.partition() + "] offset["
 							+ item.offset() + "] message[" + item.message()
 							+ "]");
 
@@ -277,27 +277,27 @@ public class KafkaConsumer {
 	}
 
 	class ConcurrentMessageRunner implements Runnable {
-		private KafkaStream<String, String> partition;
+		private KafkaStream<String, String> stream;
 
 		private MessageExecutor messageExecutor;
 
 		private ExecutorService threadPool;
 
-		ConcurrentMessageRunner(KafkaStream<String, String> partition,
+		ConcurrentMessageRunner(KafkaStream<String, String> stream,
 				MessageExecutor messageExecutor, int threadNum) {
-			this.partition = partition;
+			this.stream = stream;
 			this.messageExecutor = messageExecutor;
 
 			threadPool = Executors.newFixedThreadPool(threadNum);
 		}
 
 		public void run() {
-			ConsumerIterator<String, String> it = partition.iterator();
+			ConsumerIterator<String, String> it = stream.iterator();
 			while (status == Status.RUNNING) {
 				if (it.hasNext()) {
 					// TODO if error, how to handle, continue or throw exception
 					final MessageAndMetadata<String, String> item = it.next();
-					log.debug("partiton[" + item.partition() + "] offset["
+					log.debug("partition[" + item.partition() + "] offset["
 							+ item.offset() + "] message[" + item.message()
 							+ "]");
 

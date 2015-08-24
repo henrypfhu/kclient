@@ -12,3 +12,4 @@
 1. 如果某个线程中处理某条消息失败怎么办？如果大量失败怎么办？
 2. 并发的处理器中，如果断电了，怎么回复
 3. 研究关机的时候哪些信号会杀死线程，deamon和非deamon线程的区别
+4. Support group, without group, it is a queue, with group, it is publish/subscribe model
