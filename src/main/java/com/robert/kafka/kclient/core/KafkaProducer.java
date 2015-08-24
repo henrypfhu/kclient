@@ -1,4 +1,4 @@
-package com.robert.kafka.kclient;
+package com.robert.kafka.kclient.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public class KafkaProducer {
 		init();
 	}
 
-	public void init() {
+	protected void init() {
 		log.info("Producer properties:" + properties);
 		ProducerConfig config = new ProducerConfig(properties);
 		producer = new Producer<String, String>(config);
@@ -107,7 +107,7 @@ public class KafkaProducer {
 					topicName, entry);
 			kms.add(km);
 			i++;
-			// 一次发送的消息数量超过20的，每20个发送一次
+			// Send the messages 20 at most once
 			if (i % MULTI_MSG_ONCE_SEND_NUM == 0) {
 				producer.send(kms);
 				kms.clear();
@@ -135,7 +135,7 @@ public class KafkaProducer {
 					topicName, entry.getKey(), entry.getValue());
 			kms.add(km);
 			i++;
-			// 一次发送的消息数量超过20（默认值，可修改）的，每20个发送一次
+			// Send the messages 20 at most once
 			if (i % MULTI_MSG_ONCE_SEND_NUM == 0) {
 				producer.send(kms);
 				kms.clear();
