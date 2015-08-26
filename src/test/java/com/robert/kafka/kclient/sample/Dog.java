@@ -34,7 +34,7 @@ public class Dog {
 		StringBuffer sb = new StringBuffer("Dog[");
 		sb.append("id=").append(id).append(",");
 		sb.append("name=").append(name).append("]");
-		return super.toString();
+		return sb.toString();
 	}
 
 };

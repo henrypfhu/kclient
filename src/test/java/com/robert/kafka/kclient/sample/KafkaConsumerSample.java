@@ -1,5 +1,7 @@
 package com.robert.kafka.kclient.sample;
 
+import java.io.IOException;
+
 import com.robert.kafka.kclient.core.KafkaConsumer;
 
 /**
@@ -16,9 +18,15 @@ public class KafkaConsumerSample {
 		DogHandler mbe = new DogHandler();
 
 		KafkaConsumer kafkaConsumer = new KafkaConsumer(
-				"kafka-client.properties", mbe, "sample-topic", 3);
+				"kafka-consumer.properties", mbe, "test", 1);
 		try {
 			kafkaConsumer.startup();
+
+			try {
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} finally {
 			kafkaConsumer.shutdownGracefully();
 		}

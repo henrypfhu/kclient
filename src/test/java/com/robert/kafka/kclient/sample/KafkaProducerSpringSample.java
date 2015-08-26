@@ -25,8 +25,7 @@ public class KafkaProducerSpringSample {
 			Dog dog = new Dog();
 			dog.setName("Yours " + i);
 			dog.setId(i);
-			kafkaProducer.sendWithTopic("sample-topic",
-					JSON.toJSONString(dog));
+			kafkaProducer.sendWithTopic("sample-topic", JSON.toJSONString(dog));
 
 			Thread.sleep(100);
 		}

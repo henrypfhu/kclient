@@ -14,14 +14,15 @@ import com.robert.kafka.kclient.core.KafkaProducer;
 public class KafkaProducerSample {
 	public static void main(String[] args) throws InterruptedException {
 		KafkaProducer kafkaProducer = new KafkaProducer(
-				"kafka-client.properties", "sample-topic");
+				"kafka-producer.properties", "test");
 
 		for (int i = 0; i < 100; i++) {
 			Dog dog = new Dog();
 			dog.setName("Yours " + i);
 			dog.setId(i);
-			kafkaProducer.sendWithTopic("sample-topic",
-					JSON.toJSONString(dog));
+			kafkaProducer.sendWithTopic("test", JSON.toJSONString(dog));
+
+			System.out.format("Sending dog: %d \n", i + 1);
 
 			Thread.sleep(100);
 		}

@@ -6,8 +6,7 @@
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
 
-	<bean name="myBeanHandler"
-		class="com.robert.kafka.kclient.sample" />
+	<bean name="myBeanHandler" class="com.robert.kafka.kclient.sample" />
 
 	<bean name="consumer" class="com.robert.kafka.kclient.core.KafkaConsumer">
 		<construct-arg index="0" value="kafka-client.properties"></construct-arg>

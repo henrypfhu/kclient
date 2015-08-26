@@ -15,7 +15,7 @@ public class DogHandler extends BeanMessageHandler<Dog> {
 		super(Dog.class);
 	}
 
-	protected void doExecuteBean(Dog bean) {
-		System.out.println(bean);
+	protected void doExecuteBean(Dog dog) {
+		System.out.format("Receiving dog: %s\n", dog);
 	}
 }

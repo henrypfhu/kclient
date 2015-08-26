@@ -18,7 +18,12 @@ public abstract class SafelyMessageHandler implements MessageHandler {
 		try {
 			doExecute(message);
 		} catch (Throwable t) {
-			log.error("Failed to handle the message:\t" + message, t);
+			if (t instanceof InterruptedException)
+				log.error(
+						"Maybe shutting down. Interruped when handing the message:\t"
+								+ message, t);
+			else
+				log.error("Failed to handle the message:\t" + message, t);
 		}
 	}
 
