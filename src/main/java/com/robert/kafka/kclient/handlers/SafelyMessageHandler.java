@@ -14,16 +14,24 @@ public abstract class SafelyMessageHandler implements MessageHandler {
 	protected static Logger log = LoggerFactory
 			.getLogger(SafelyMessageHandler.class);
 
+	// Write down the error log for data recovery
+
+	protected static Logger errorRunLog = LoggerFactory.getLogger("error.run."
+			+ SafelyMessageHandler.class);
+	protected static Logger shutdownErrorlog = LoggerFactory
+			.getLogger("error.shutdown." + SafelyMessageHandler.class);
+
 	public void execute(String message) {
 		try {
 			doExecute(message);
 		} catch (Throwable t) {
 			if (t instanceof InterruptedException)
-				log.error(
+				errorRunLog.error(
 						"Maybe shutting down. Interruped when handing the message:\t"
 								+ message, t);
 			else
-				log.error("Failed to handle the message:\t" + message, t);
+				shutdownErrorlog.error("Failed to handle the message:\t"
+						+ message, t);
 		}
 	}
 
