@@ -21,11 +21,13 @@ public class KafkaProducerSpringSample {
 
 		KafkaProducer kafkaProducer = (KafkaProducer) ac.getBean("producer");
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 10; i++) {
 			Dog dog = new Dog();
 			dog.setName("Yours " + i);
 			dog.setId(i);
 			kafkaProducer.sendWithTopic("sample-topic", JSON.toJSONString(dog));
+
+			System.out.format("Sending dog: %d \n", i + 1);
 
 			Thread.sleep(100);
 		}

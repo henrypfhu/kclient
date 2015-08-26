@@ -79,6 +79,7 @@ public class KafkaConsumer {
 	private int minThreadNum = 0;
 	private int maxThreadNum = 0;
 
+	private boolean isAsyncThreadModel = false;
 	private boolean isSharedAsyncThreadPool = false;
 
 	private List<AbstractMessageTask> tasks;
@@ -93,6 +94,11 @@ public class KafkaConsumer {
 	}
 
 	public KafkaConsumer(String propertiesFile, String topic, int streamNum,
+			int fixedThreadNum, MessageHandler handler) {
+		this(propertiesFile, topic, streamNum, fixedThreadNum, false, handler);
+	}
+
+	public KafkaConsumer(String propertiesFile, String topic, int streamNum,
 			int fixedThreadNum, boolean isSharedThreadPool,
 			MessageHandler handler) {
 		this.propertiesFile = propertiesFile;
@@ -101,8 +107,15 @@ public class KafkaConsumer {
 		this.fixedThreadNum = fixedThreadNum;
 		this.isSharedAsyncThreadPool = isSharedThreadPool;
 		this.handler = handler;
+		this.isAsyncThreadModel = (fixedThreadNum != 0);
 
 		init();
+	}
+
+	public KafkaConsumer(String propertiesFile, String topic, int streamNum,
+			int minThreadNum, int maxThreadNum, MessageHandler handler) {
+		this(propertiesFile, topic, streamNum, minThreadNum, maxThreadNum,
+				false, handler);
 	}
 
 	public KafkaConsumer(String propertiesFile, String topic, int streamNum,
@@ -115,6 +128,7 @@ public class KafkaConsumer {
 		this.maxThreadNum = maxThreadNum;
 		this.isSharedAsyncThreadPool = isSharedThreadPool;
 		this.handler = handler;
+		this.isAsyncThreadModel = !(minThreadNum == 0 && maxThreadNum == 0);
 
 		init();
 	}
@@ -122,6 +136,11 @@ public class KafkaConsumer {
 	public KafkaConsumer(Properties properties, String topic, int streamNum,
 			MessageHandler handler) {
 		this(properties, topic, streamNum, 0, false, handler);
+	}
+
+	public KafkaConsumer(Properties properties, String topic, int streamNum,
+			int fixedThreadNum, MessageHandler handler) {
+		this(properties, topic, streamNum, fixedThreadNum, false, handler);
 	}
 
 	public KafkaConsumer(Properties properties, String topic, int streamNum,
@@ -133,8 +152,15 @@ public class KafkaConsumer {
 		this.fixedThreadNum = fixedThreadNum;
 		this.isSharedAsyncThreadPool = isSharedThreadPool;
 		this.handler = handler;
+		this.isAsyncThreadModel = (fixedThreadNum != 0);
 
 		init();
+	}
+
+	public KafkaConsumer(Properties properties, String topic, int streamNum,
+			int minThreadNum, int maxThreadNum, MessageHandler handler) {
+		this(properties, topic, streamNum, minThreadNum, maxThreadNum, false,
+				handler);
 	}
 
 	public KafkaConsumer(Properties properties, String topic, int streamNum,
@@ -147,6 +173,7 @@ public class KafkaConsumer {
 		this.maxThreadNum = maxThreadNum;
 		this.isSharedAsyncThreadPool = isSharedThreadPool;
 		this.handler = handler;
+		this.isAsyncThreadModel = !(minThreadNum == 0 && maxThreadNum == 0);
 
 		init();
 	}
@@ -163,14 +190,21 @@ public class KafkaConsumer {
 			throw new IllegalArgumentException("The topic can't be empty.");
 		}
 
-		if (fixedThreadNum <= 0 && (minThreadNum <= 0 || maxThreadNum == 0)) {
+		if (isAsyncThreadModel == true && fixedThreadNum <= 0
+				&& (minThreadNum <= 0 || maxThreadNum <= 0)) {
 			log.error("Either fixedThreadNum or minThreadNum/maxThreadNum is greater than 0.");
 			throw new IllegalArgumentException(
 					"Either fixedThreadNum or minThreadNum/maxThreadNum is greater than 0.");
 		}
 
+		if (isAsyncThreadModel == true && minThreadNum > maxThreadNum) {
+			log.error("The minThreadNum should be less than maxThreadNum.");
+			throw new IllegalArgumentException(
+					"The minThreadNum should be less than maxThreadNum.");
+		}
+
 		if (properties == null)
-			loadPropertiesfile();
+			properties = loadPropertiesfile();
 
 		if (isSharedAsyncThreadPool) {
 			sharedAsyncThreadPool = initAsyncThreadPool();
@@ -310,20 +344,20 @@ public class KafkaConsumer {
 		log.info("Finally shutdown the thead pool: %s", alias);
 	}
 
+	public String getPropertiesFile() {
+		return propertiesFile;
+	}
+
+	public void setPropertiesFile(String propertiesFile) {
+		this.propertiesFile = propertiesFile;
+	}
+
 	public Properties getProperties() {
 		return properties;
 	}
 
 	public void setProperties(Properties properties) {
 		this.properties = properties;
-	}
-
-	public MessageHandler getHandler() {
-		return handler;
-	}
-
-	public void setHandler(MessageHandler handler) {
-		this.handler = handler;
 	}
 
 	public String getTopic() {
@@ -342,16 +376,36 @@ public class KafkaConsumer {
 		this.streamNum = streamNum;
 	}
 
-	public int getThreadNum() {
+	public MessageHandler getHandler() {
+		return handler;
+	}
+
+	public void setHandler(MessageHandler handler) {
+		this.handler = handler;
+	}
+
+	public int getFixedThreadNum() {
 		return fixedThreadNum;
 	}
 
-	public void setThreadNum(int threadNum) {
-		this.fixedThreadNum = threadNum;
+	public void setFixedThreadNum(int fixedThreadNum) {
+		this.fixedThreadNum = fixedThreadNum;
 	}
 
-	public Status getStatus() {
-		return status;
+	public int getMinThreadNum() {
+		return minThreadNum;
+	}
+
+	public void setMinThreadNum(int minThreadNum) {
+		this.minThreadNum = minThreadNum;
+	}
+
+	public int getMaxThreadNum() {
+		return maxThreadNum;
+	}
+
+	public void setMaxThreadNum(int maxThreadNum) {
+		this.maxThreadNum = maxThreadNum;
 	}
 
 	abstract class AbstractMessageTask implements Runnable {
@@ -372,8 +426,11 @@ public class KafkaConsumer {
 				try {
 					hasNext = it.hasNext();
 				} catch (Exception e) {
-					// hasNext method is implemented by scala, so no checked
-					// exception is declared, we have to catch Exception here
+					// hasNext() method is implemented by scala, so no checked
+					// exception is declared, in addtion, hasNext() may throw
+					// Interrupted exception when interrupted, so we have to
+					// catch Exception here and then decide if it is interrupted
+					// exception
 					if (e instanceof InterruptedException) {
 						log.info(
 								"The worker [Thread ID: %d] has been interrupted when retrieving messages from kafka broker. Maybe the consumer is shutting down.",
@@ -388,7 +445,6 @@ public class KafkaConsumer {
 				}
 
 				if (hasNext) {
-					// TODO if error, how to handle, continue or throw exception
 					MessageAndMetadata<String, String> item = it.next();
 					log.debug("partition[" + item.partition() + "] offset["
 							+ item.offset() + "] message[" + item.message()

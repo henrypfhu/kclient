@@ -6,12 +6,12 @@
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
 
-	<bean name="myBeanHandler" class="com.robert.kafka.kclient.sample" />
+	<bean name="dogHandler" class="com.robert.kafka.kclient.sample.DogHandler" />
 
-	<bean name="consumer" class="com.robert.kafka.kclient.core.KafkaConsumer">
-		<construct-arg index="0" value="kafka-client.properties"></construct-arg>
-		<construct-arg index="1" value="myBeanHandler"></construct-arg>
-		<construct-arg index="2" value="sample-topic"></construct-arg>
-		<construct-arg index="3" value="3"></construct-arg>
+	<bean name="consumer" class="com.robert.kafka.kclient.core.KafkaConsumer" init-method="init">
+		<property name="propertiesFile" value="kafka-consumer.properties" />
+		<property name="topic" value="test" />
+		<property name="streamNum" value="1" />
+		<property name="handler" ref="dogHandler" />
 	</bean>
 </beans>

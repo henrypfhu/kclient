@@ -36,18 +36,15 @@ public class KafkaProducer {
 
 	private String defaultTopic;
 
+	private String propertiesFile;
 	private Properties properties;
 
+	public KafkaProducer() {
+		// For Spring context
+	}
+
 	public KafkaProducer(String propertiesFile, String defaultTopic) {
-		properties = new Properties();
-		try {
-			properties.load(Thread.currentThread().getContextClassLoader()
-					.getResourceAsStream(propertiesFile));
-		} catch (IOException e) {
-			log.error("The properties file is not loaded.", e);
-			throw new IllegalArgumentException(
-					"The properties file is not loaded.", e);
-		}
+		this.propertiesFile = propertiesFile;
 		this.defaultTopic = defaultTopic;
 
 		init();
@@ -61,7 +58,19 @@ public class KafkaProducer {
 	}
 
 	protected void init() {
+		if (properties == null) {
+			properties = new Properties();
+			try {
+				properties.load(Thread.currentThread().getContextClassLoader()
+						.getResourceAsStream(propertiesFile));
+			} catch (IOException e) {
+				log.error("The properties file is not loaded.", e);
+				throw new IllegalArgumentException(
+						"The properties file is not loaded.", e);
+			}
+		}
 		log.info("Producer properties:" + properties);
+
 		ProducerConfig config = new ProducerConfig(properties);
 		producer = new Producer<String, String>(config);
 	}
@@ -149,5 +158,29 @@ public class KafkaProducer {
 
 	public void close() {
 		producer.close();
+	}
+
+	public String getDefaultTopic() {
+		return defaultTopic;
+	}
+
+	public void setDefaultTopic(String defaultTopic) {
+		this.defaultTopic = defaultTopic;
+	}
+
+	public String getPropertiesFile() {
+		return propertiesFile;
+	}
+
+	public void setPropertiesFile(String propertiesFile) {
+		this.propertiesFile = propertiesFile;
+	}
+
+	public Properties getProperties() {
+		return properties;
+	}
+
+	public void setProperties(Properties properties) {
+		this.properties = properties;
 	}
 }
