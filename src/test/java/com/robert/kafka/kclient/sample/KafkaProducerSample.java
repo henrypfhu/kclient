@@ -17,11 +17,11 @@ public class KafkaProducerSample {
 				"kafka-client.properties", "sample-topic");
 
 		for (int i = 0; i < 100; i++) {
-			MyBean myBean = new MyBean();
-			myBean.setName("Yours " + i);
-			myBean.setId(i);
+			Dog dog = new Dog();
+			dog.setName("Yours " + i);
+			dog.setId(i);
 			kafkaProducer.sendWithTopic("sample-topic",
-					JSON.toJSONString(myBean));
+					JSON.toJSONString(dog));
 
 			Thread.sleep(100);
 		}

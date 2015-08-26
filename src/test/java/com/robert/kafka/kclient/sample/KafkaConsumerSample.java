@@ -13,7 +13,7 @@ import com.robert.kafka.kclient.core.KafkaConsumer;
 public class KafkaConsumerSample {
 
 	public static void main(String[] args) {
-		MyBeanHandler mbe = new MyBeanHandler();
+		DogHandler mbe = new DogHandler();
 
 		KafkaConsumer kafkaConsumer = new KafkaConsumer(
 				"kafka-client.properties", mbe, "sample-topic", 3);

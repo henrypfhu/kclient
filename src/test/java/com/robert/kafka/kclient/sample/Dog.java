@@ -8,7 +8,7 @@ package com.robert.kafka.kclient.sample;
  *
  */
 
-public class MyBean {
+public class Dog {
 	private long id;
 
 	private String name;
@@ -31,7 +31,7 @@ public class MyBean {
 
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer("MyBean[");
+		StringBuffer sb = new StringBuffer("Dog[");
 		sb.append("id=").append(id).append(",");
 		sb.append("name=").append(name).append("]");
 		return super.toString();

@@ -10,12 +10,12 @@ import com.robert.kafka.kclient.handlers.BeanMessageHandler;
  *
  */
 
-public class MyBeanHandler extends BeanMessageHandler<MyBean> {
-	public MyBeanHandler() {
-		super(MyBean.class);
+public class DogHandler extends BeanMessageHandler<Dog> {
+	public DogHandler() {
+		super(Dog.class);
 	}
 
-	protected void doExecuteBean(MyBean bean) {
+	protected void doExecuteBean(Dog bean) {
 		System.out.println(bean);
 	}
 }
