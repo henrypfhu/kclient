@@ -16,7 +16,7 @@ public class KafkaProducerSample {
 		KafkaProducer kafkaProducer = new KafkaProducer(
 				"kafka-producer.properties", "test");
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 10; i++) {
 			Dog dog = new Dog();
 			dog.setName("Yours " + i);
 			dog.setId(i);

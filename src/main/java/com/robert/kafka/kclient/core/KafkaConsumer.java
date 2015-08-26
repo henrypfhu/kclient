@@ -1,12 +1,15 @@
 package com.robert.kafka.kclient.core;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import kafka.consumer.Consumer;
@@ -20,6 +23,7 @@ import kafka.utils.VerifiableProperties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import com.robert.kafka.kclient.handlers.MessageHandler;
 
@@ -48,12 +52,16 @@ import com.robert.kafka.kclient.handlers.MessageHandler;
 public class KafkaConsumer {
 	protected static Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
 
+	private String propertiesFile;
 	private Properties properties;
-	private MessageHandler handler;
 	private String topic;
 	private int streamNum;
 
-	private ExecutorService threadPool;
+	private MessageHandler handler;
+
+	private ExecutorService streamThreadPool;
+
+	private ExecutorService sharedAsyncThreadPool;
 
 	private ConsumerConnector consumerConnector;
 
@@ -66,57 +74,135 @@ public class KafkaConsumer {
 
 	private volatile Status status = Status.INIT;
 
-	private int threadNum;
+	private int fixedThreadNum = 0;
+
+	private int minThreadNum = 0;
+	private int maxThreadNum = 0;
+
+	private boolean isSharedAsyncThreadPool = false;
+
+	private List<AbstractMessageTask> tasks;
 
 	public KafkaConsumer() {
 		// For Spring context
 	}
 
-	public KafkaConsumer(String propertiesFile, MessageHandler handler,
-			String topic, int streamNum) {
-		this(propertiesFile, handler, topic, streamNum, 0);
+	public KafkaConsumer(String propertiesFile, String topic, int streamNum,
+			MessageHandler handler) {
+		this(propertiesFile, topic, streamNum, 0, false, handler);
 	}
 
-	public KafkaConsumer(String propertiesFile, MessageHandler handler,
-			String topic, int streamNum, int threadNum) {
-		properties = new Properties();
-		try {
-			properties.load(Thread.currentThread().getContextClassLoader()
-					.getResourceAsStream(propertiesFile));
-		} catch (IOException e) {
-			log.error("The properties file is not loaded.", e);
-			throw new IllegalArgumentException(
-					"The properties file is not loaded.", e);
-		}
-
-		this.handler = handler;
+	public KafkaConsumer(String propertiesFile, String topic, int streamNum,
+			int fixedThreadNum, boolean isSharedThreadPool,
+			MessageHandler handler) {
+		this.propertiesFile = propertiesFile;
 		this.topic = topic;
 		this.streamNum = streamNum;
-		this.threadNum = 0;
+		this.fixedThreadNum = fixedThreadNum;
+		this.isSharedAsyncThreadPool = isSharedThreadPool;
+		this.handler = handler;
 
 		init();
 	}
 
-	public KafkaConsumer(Properties properties, MessageHandler handler,
-			String topic, int streamNum) {
-		this(properties, handler, topic, streamNum, 0);
-	}
-
-	public KafkaConsumer(Properties properties, MessageHandler handler,
-			String topic, int streamNum, int threadNum) {
-		this.properties = properties;
-
-		this.handler = handler;
+	public KafkaConsumer(String propertiesFile, String topic, int streamNum,
+			int minThreadNum, int maxThreadNum, boolean isSharedThreadPool,
+			MessageHandler handler) {
+		this.propertiesFile = propertiesFile;
 		this.topic = topic;
 		this.streamNum = streamNum;
-		this.threadNum = threadNum;
+		this.minThreadNum = minThreadNum;
+		this.maxThreadNum = maxThreadNum;
+		this.isSharedAsyncThreadPool = isSharedThreadPool;
+		this.handler = handler;
+
+		init();
+	}
+
+	public KafkaConsumer(Properties properties, String topic, int streamNum,
+			MessageHandler handler) {
+		this(properties, topic, streamNum, 0, false, handler);
+	}
+
+	public KafkaConsumer(Properties properties, String topic, int streamNum,
+			int fixedThreadNum, boolean isSharedThreadPool,
+			MessageHandler handler) {
+		this.properties = properties;
+		this.topic = topic;
+		this.streamNum = streamNum;
+		this.fixedThreadNum = fixedThreadNum;
+		this.isSharedAsyncThreadPool = isSharedThreadPool;
+		this.handler = handler;
+
+		init();
+	}
+
+	public KafkaConsumer(Properties properties, String topic, int streamNum,
+			int minThreadNum, int maxThreadNum, boolean isSharedThreadPool,
+			MessageHandler handler) {
+		this.properties = properties;
+		this.topic = topic;
+		this.streamNum = streamNum;
+		this.minThreadNum = minThreadNum;
+		this.maxThreadNum = maxThreadNum;
+		this.isSharedAsyncThreadPool = isSharedThreadPool;
+		this.handler = handler;
 
 		init();
 	}
 
 	public void init() {
+		if (properties == null && propertiesFile == null) {
+			log.error("The properties object or file can't be null.");
+			throw new IllegalArgumentException(
+					"The properties object or file can't be null.");
+		}
+
+		if (StringUtils.isEmpty(topic)) {
+			log.error("The topic can't be empty.");
+			throw new IllegalArgumentException("The topic can't be empty.");
+		}
+
+		if (fixedThreadNum <= 0 && (minThreadNum <= 0 || maxThreadNum == 0)) {
+			log.error("Either fixedThreadNum or minThreadNum/maxThreadNum is greater than 0.");
+			throw new IllegalArgumentException(
+					"Either fixedThreadNum or minThreadNum/maxThreadNum is greater than 0.");
+		}
+
+		if (properties == null)
+			loadPropertiesfile();
+
+		if (isSharedAsyncThreadPool) {
+			sharedAsyncThreadPool = initAsyncThreadPool();
+		}
+
 		initGracefullyShutdown();
 		initKafka();
+	}
+
+	protected Properties loadPropertiesfile() {
+		Properties properties = new Properties();
+		try {
+			properties.load(Thread.currentThread().getContextClassLoader()
+					.getResourceAsStream(propertiesFile));
+		} catch (IOException e) {
+			log.error("The consumer properties file is not loaded.", e);
+			throw new IllegalArgumentException(
+					"The consumer properties file is not loaded.", e);
+		}
+
+		return properties;
+	}
+
+	private ExecutorService initAsyncThreadPool() {
+		ExecutorService syncThreadPool = null;
+		if (fixedThreadNum > 0)
+			syncThreadPool = Executors.newFixedThreadPool(fixedThreadNum);
+		else
+			syncThreadPool = new ThreadPoolExecutor(minThreadNum, maxThreadNum,
+					60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+
+		return syncThreadPool;
 	}
 
 	protected void initGracefullyShutdown() {
@@ -137,6 +223,8 @@ public class KafkaConsumer {
 		ConsumerConfig config = new ConsumerConfig(properties);
 
 		isAutoCommitOffset = config.autoCommitEnable();
+		log.info("Auto commit: " + isAutoCommitOffset);
+
 		consumerConnector = Consumer.createJavaConsumerConnector(config);
 
 		Map<String, Integer> topics = new HashMap<String, Integer>();
@@ -155,7 +243,7 @@ public class KafkaConsumer {
 			throw new IllegalArgumentException("Streams are empty.");
 		}
 
-		threadPool = Executors.newFixedThreadPool(streamNum);
+		streamThreadPool = Executors.newFixedThreadPool(streamNum);
 	}
 
 	public void startup() {
@@ -165,10 +253,13 @@ public class KafkaConsumer {
 		}
 
 		log.info("Streams num: " + streams.size());
+		tasks = new ArrayList<AbstractMessageTask>();
 		for (KafkaStream<String, String> stream : streams) {
-			threadPool.execute(threadNum == 0 ? new SequentialMessageTask(
+			AbstractMessageTask abstractMessageTask = (fixedThreadNum == 0 ? new SequentialMessageTask(
 					stream, handler) : new ConcurrentMessageTask(stream,
-					handler, threadNum));
+					handler, fixedThreadNum));
+			tasks.add(abstractMessageTask);
+			streamThreadPool.execute(abstractMessageTask);
 		}
 
 		status = Status.RUNNING;
@@ -177,7 +268,14 @@ public class KafkaConsumer {
 	public void shutdownGracefully() {
 		status = Status.STOPPING;
 
-		shutdownThreadPool(threadPool, "main-pool");
+		shutdownThreadPool(streamThreadPool, "main-pool");
+
+		if (isSharedAsyncThreadPool)
+			shutdownThreadPool(sharedAsyncThreadPool, "main-pool");
+		else
+			for (AbstractMessageTask task : tasks) {
+				task.shutdown();
+			}
 
 		if (consumerConnector != null) {
 			consumerConnector.shutdown();
@@ -245,11 +343,11 @@ public class KafkaConsumer {
 	}
 
 	public int getThreadNum() {
-		return threadNum;
+		return fixedThreadNum;
 	}
 
 	public void setThreadNum(int threadNum) {
-		this.threadNum = threadNum;
+		this.fixedThreadNum = threadNum;
 	}
 
 	public Status getStatus() {
@@ -326,18 +424,22 @@ public class KafkaConsumer {
 	}
 
 	class ConcurrentMessageTask extends AbstractMessageTask {
-		private ExecutorService threadPool;
+		private ExecutorService asyncThreadPool;
 
 		ConcurrentMessageTask(KafkaStream<String, String> stream,
 				MessageHandler messageHandler, int threadNum) {
 			super(stream, messageHandler);
 
-			threadPool = Executors.newFixedThreadPool(threadNum);
+			if (isSharedAsyncThreadPool)
+				asyncThreadPool = sharedAsyncThreadPool;
+			else {
+				asyncThreadPool = initAsyncThreadPool();
+			}
 		}
 
 		@Override
 		protected void handleMessage(final String message) {
-			threadPool.submit(new Runnable() {
+			asyncThreadPool.submit(new Runnable() {
 				public void run() {
 					// if it blows, how to recover
 					messageHandler.execute(message);
@@ -346,8 +448,9 @@ public class KafkaConsumer {
 		}
 
 		protected void shutdown() {
-			shutdownThreadPool(threadPool, "stream-pool-"
-					+ Thread.currentThread().getId());
+			if (!isSharedAsyncThreadPool)
+				shutdownThreadPool(asyncThreadPool, "stream-pool-"
+						+ Thread.currentThread().getId());
 		}
 	}
 }

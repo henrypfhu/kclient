@@ -18,7 +18,7 @@ public class KafkaConsumerSample {
 		DogHandler mbe = new DogHandler();
 
 		KafkaConsumer kafkaConsumer = new KafkaConsumer(
-				"kafka-consumer.properties", mbe, "test", 1);
+				"kafka-consumer.properties", "test", 1, mbe);
 		try {
 			kafkaConsumer.startup();
 
