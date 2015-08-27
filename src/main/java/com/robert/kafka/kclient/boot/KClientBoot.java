@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.w3c.dom.Document;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -19,6 +20,7 @@ import com.robert.kafka.kclient.core.KafkaConsumer;
 import com.robert.kafka.kclient.core.KafkaProducer;
 import com.robert.kafka.kclient.handlers.BeanMessageHandler;
 import com.robert.kafka.kclient.handlers.BeansMessageHandler;
+import com.robert.kafka.kclient.handlers.DocumentMessageHandler;
 import com.robert.kafka.kclient.handlers.MessageHandler;
 import com.robert.kafka.kclient.handlers.ObjectMessageHandler;
 import com.robert.kafka.kclient.handlers.ObjectsMessageHandler;
@@ -119,6 +121,10 @@ public class KClientBoot implements ApplicationContextAware {
 		} else if (paramClazz.isAssignableFrom(JSONArray.class)) {
 			beanMessageHandler = createObjectsHandler(kafkaHandlerMeta,
 					kafkaProducer);
+		} else if (List.class.isAssignableFrom(Document.class)) {
+			beanMessageHandler = createDocumentHandler(kafkaHandlerMeta,
+					kafkaProducer);
+
 		} else if (List.class.isAssignableFrom(paramClazz)) {
 			beanMessageHandler = createBeansHandler(kafkaHandlerMeta,
 					kafkaProducer);
@@ -162,6 +168,20 @@ public class KClientBoot implements ApplicationContextAware {
 		};
 
 		return objectMessageHandler;
+	}
+
+	protected DocumentMessageHandler createDocumentHandler(
+			final KafkaHandlerMeta kafkaHandlerMeta,
+			final KafkaProducer kafkaProducer) {
+
+		DocumentMessageHandler documentMessageHandler = new DocumentMessageHandler() {
+			@Override
+			protected void doExecuteDocument(Document document) {
+				invokeHandler(kafkaHandlerMeta, kafkaProducer, document);
+			}
+		};
+
+		return documentMessageHandler;
 	}
 
 	@SuppressWarnings("unchecked")

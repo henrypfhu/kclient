@@ -20,7 +20,7 @@ import org.xml.sax.SAXException;
  * @since Aug 21, 2015
  *
  */
-public abstract class DocumentMessageHandler<T> extends SafelyMessageHandler {
+public abstract class DocumentMessageHandler extends SafelyMessageHandler {
 	protected static Logger log = LoggerFactory
 			.getLogger(DocumentMessageHandler.class);
 
