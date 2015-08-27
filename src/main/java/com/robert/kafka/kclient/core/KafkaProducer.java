@@ -75,7 +75,11 @@ public class KafkaProducer {
 		producer = new Producer<String, String>(config);
 	}
 
-	public void sendWithTopic(String topicName, String message) {
+	public void send(String message) {
+		send2Topic(null, message);
+	}
+
+	public void send2Topic(String topicName, String message) {
 		if (message == null) {
 			return;
 		}
@@ -88,7 +92,11 @@ public class KafkaProducer {
 		producer.send(km);
 	}
 
-	public void sendWithTopic(String topicName, String key, String message) {
+	public void send(String key, String message) {
+		send2Topic(null, key, message);
+	}
+
+	public void send2Topic(String topicName, String key, String message) {
 		if (message == null) {
 			return;
 		}
@@ -101,7 +109,11 @@ public class KafkaProducer {
 		producer.send(km);
 	}
 
-	public void sendWithTopic(String topicName, Collection<String> messages) {
+	public void send(Collection<String> messages) {
+		send2Topic(null, messages);
+	}
+
+	public void send2Topic(String topicName, Collection<String> messages) {
 		if (messages == null || messages.isEmpty()) {
 			return;
 		}
@@ -128,7 +140,11 @@ public class KafkaProducer {
 		}
 	}
 
-	public void sendWithTopic(String topicName, Map<String, String> messages) {
+	public void send(Map<String, String> messages) {
+		send2Topic(null, messages);
+	}
+
+	public void send2Topic(String topicName, Map<String, String> messages) {
 		if (messages == null || messages.isEmpty()) {
 			return;
 		}

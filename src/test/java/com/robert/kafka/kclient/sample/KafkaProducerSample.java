@@ -20,7 +20,7 @@ public class KafkaProducerSample {
 			Dog dog = new Dog();
 			dog.setName("Yours " + i);
 			dog.setId(i);
-			kafkaProducer.sendWithTopic("test", JSON.toJSONString(dog));
+			kafkaProducer.send2Topic("test", JSON.toJSONString(dog));
 
 			System.out.format("Sending dog: %d \n", i + 1);
 
