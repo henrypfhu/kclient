@@ -25,6 +25,17 @@ import com.robert.kafka.kclient.handlers.MessageHandler;
 import com.robert.kafka.kclient.handlers.ObjectMessageHandler;
 import com.robert.kafka.kclient.handlers.ObjectsMessageHandler;
 
+/**
+ * This is the starter of the annotated message handlers. This class is loaded
+ * by any spring context. When the context is post constructed, it will read the
+ * annotated message handler, and then create the related consumer or producer.
+ * Finally, we start the consumer server.
+ * 
+ * @author Robert Lee
+ * @since Aug 21, 2015
+ *
+ */
+
 public class KClientBoot implements ApplicationContextAware {
 	protected static Logger log = LoggerFactory.getLogger(KClientBoot.class);
 

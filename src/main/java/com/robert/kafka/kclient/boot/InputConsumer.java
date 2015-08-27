@@ -6,6 +6,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * This annotation is used for a method which serve as a message handler. It
+ * includes the metadata for the input topic.
+ * 
+ * @author Robert Lee
+ * @since Aug 21, 2015
+ *
+ */
 @Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

@@ -2,6 +2,15 @@ package com.robert.kafka.kclient.boot;
 
 import java.lang.reflect.Method;
 
+/**
+ * Used to store the handler related information by reflection. These
+ * information will be used to call the handler by reflection subsequently.
+ * 
+ * @author Robert Lee
+ * @since Aug 21, 2015
+ *
+ */
+
 public class KafkaHandlerMeta {
 	private Object bean;
 
