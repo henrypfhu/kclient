@@ -5,6 +5,12 @@ import org.springframework.stereotype.Component;
 import com.robert.kafka.kclient.boot.InputConsumer;
 import com.robert.kafka.kclient.boot.KafkaHandlers;
 
+/**
+ * Sample for using annotated message handler.
+ * 
+ * @author Robert Lee
+ * @since Aug 21, 2015
+ */
 @Component
 @KafkaHandlers
 public class AnnotatedDogHandler {

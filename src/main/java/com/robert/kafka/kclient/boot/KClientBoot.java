@@ -128,22 +128,18 @@ public class KClientBoot implements ApplicationContextAware {
 		if (paramClazz.isAssignableFrom(JSONObject.class)) {
 			beanMessageHandler = createObjectHandler(kafkaHandlerMeta,
 					kafkaProducer);
-
 		} else if (paramClazz.isAssignableFrom(JSONArray.class)) {
 			beanMessageHandler = createObjectsHandler(kafkaHandlerMeta,
 					kafkaProducer);
 		} else if (List.class.isAssignableFrom(Document.class)) {
 			beanMessageHandler = createDocumentHandler(kafkaHandlerMeta,
 					kafkaProducer);
-
 		} else if (List.class.isAssignableFrom(paramClazz)) {
 			beanMessageHandler = createBeansHandler(kafkaHandlerMeta,
 					kafkaProducer);
-
 		} else {
 			beanMessageHandler = createBeanHandler(kafkaHandlerMeta,
 					kafkaProducer);
-
 		}
 
 		KafkaConsumer kafkaConsumer = createConsumer(kafkaHandlerMeta,
@@ -295,8 +291,9 @@ public class KClientBoot implements ApplicationContextAware {
 					.getInputConsumer().streamNum(), kafkaHandlerMeta
 					.getInputConsumer().fixedThreadNum(), beanMessageHandler);
 
-		} else if (kafkaHandlerMeta.getInputConsumer().minThreadNum() == 0
-				|| kafkaHandlerMeta.getInputConsumer().maxThreadNum() == 0) {
+		} else if (kafkaHandlerMeta.getInputConsumer().maxThreadNum() > 0
+				&& kafkaHandlerMeta.getInputConsumer().minThreadNum() < kafkaHandlerMeta
+						.getInputConsumer().maxThreadNum()) {
 			kafkaConsumer = new KafkaConsumer(kafkaHandlerMeta
 					.getInputConsumer().propertiesFile(), kafkaHandlerMeta
 					.getInputConsumer().topic(), kafkaHandlerMeta
