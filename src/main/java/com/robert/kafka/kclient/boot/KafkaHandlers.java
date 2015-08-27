@@ -6,10 +6,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.stereotype.Component;
+
 /**
- * This annation is used to declare a class to be a message handler collection.
- * This bean should be Spring @Component so that it can be component-scanned by
- * spring context.
+ * This annotation is used to declare a class to be a message handler
+ * collection. This bean be also Spring @Component so that it can be
+ * component-scanned by spring context.
  * 
  * @author Robert Lee
  * @since Aug 21, 2015
@@ -19,5 +21,6 @@ import java.lang.annotation.Target;
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@Component
 public @interface KafkaHandlers {
 }
