@@ -305,7 +305,7 @@ public class KafkaConsumer {
 		shutdownThreadPool(streamThreadPool, "main-pool");
 
 		if (isSharedAsyncThreadPool)
-			shutdownThreadPool(sharedAsyncThreadPool, "main-pool");
+			shutdownThreadPool(sharedAsyncThreadPool, "shared-async-pool");
 		else
 			for (AbstractMessageTask task : tasks) {
 				task.shutdown();
@@ -505,7 +505,7 @@ public class KafkaConsumer {
 
 		protected void shutdown() {
 			if (!isSharedAsyncThreadPool)
-				shutdownThreadPool(asyncThreadPool, "stream-pool-"
+				shutdownThreadPool(asyncThreadPool, "async-pool-"
 						+ Thread.currentThread().getId());
 		}
 	}
