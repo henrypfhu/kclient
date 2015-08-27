@@ -26,8 +26,8 @@ public abstract class BeansMessageHandler<T> extends SafelyMessageHandler {
 
 	protected void doExecute(String message) {
 		List<T> beans = JSON.parseArray(message, clazz);
-		doExecuteBean(beans);
+		doExecuteBeans(beans);
 	}
 
-	protected abstract void doExecuteBean(List<T> bean);
+	protected abstract void doExecuteBeans(List<T> bean);
 }

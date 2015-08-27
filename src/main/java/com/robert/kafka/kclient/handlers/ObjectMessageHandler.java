@@ -20,8 +20,8 @@ public abstract class ObjectMessageHandler<T> extends SafelyMessageHandler {
 
 	protected void doExecute(String message) {
 		JSONObject jsonObject = JSON.parseObject(message);
-		doExecuteBean(jsonObject);
+		doExecuteObject(jsonObject);
 	}
 
-	protected abstract void doExecuteBean(JSONObject jsonObject);
+	protected abstract void doExecuteObject(JSONObject jsonObject);
 }
