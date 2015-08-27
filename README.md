@@ -15,9 +15,15 @@
 3. **高性能**：提供三种线程模型，用以在不同的业务场景下实现高性能：1. 适合轻量级服务的同步模型 2. 适合IO密集型服务的异步线程模型（所有流共享线程池和每个流独享线程池）， 另外异步模型中的线程池也支持确定线程池和可伸缩的线程池。
 4. **高稳定性**：框架级别处理了通用的异常，计入错误日志，可用于错误手工恢复或者洗数据，并实现了优雅关机和重启等功能
 
-## 入门指南
+## 使用指南
 
-1. Java API 2.Spring环境 3.为消费端服务器提供了Web App启动的模板项目。
+KClient提供了三种使用方法，
+
+### 1. Java API 
+
+### 2. Spring环境集成
+ 
+### 3. Webapp启动
 
 ## 架构设计
 
@@ -56,6 +62,8 @@ Handler架构设计
 ## TODO
 
 1. 做一个j2ee项目模板，使用Listener启动consumer
+2. 做一个使用Annotation启动的consumer, @Consumer(propertiesFile="", topic="", streamNum="", fixedThreadNum=""), 使用一个启动bean
+	@Producer(propertiesFile="", topic=""), 使用spring boot启动
 
 ## QQ群/微信公众号
 - <a target="_blank" href="http://shang.qq.com/wpa/qunwpa?idkey=ff0d7d34f32c87dbd9aa56499a7478cd93e0e1d44288b9f6987a043818a1ad01"><img border="0" src="http://pub.idqqimg.com/wpa/images/group.png" alt="云时代网" title="云时代网"></a>
