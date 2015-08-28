@@ -1,7 +1,8 @@
-package com.robert.kafka.kclient.sample;
+package com.robert.kafka.kclient.sample.annotation;
 
 import com.robert.kafka.kclient.boot.InputConsumer;
 import com.robert.kafka.kclient.boot.KafkaHandlers;
+import com.robert.kafka.kclient.sample.domain.Dog;
 
 /**
  * Sample for using annotated message handler.

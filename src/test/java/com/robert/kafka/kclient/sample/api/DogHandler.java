@@ -1,6 +1,7 @@
-package com.robert.kafka.kclient.sample;
+package com.robert.kafka.kclient.sample.api;
 
 import com.robert.kafka.kclient.handlers.BeanMessageHandler;
+import com.robert.kafka.kclient.sample.domain.Dog;
 
 /**
  * The message handler sample to handle the actual beans.

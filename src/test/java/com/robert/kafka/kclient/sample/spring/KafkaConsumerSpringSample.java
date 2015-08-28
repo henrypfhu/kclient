@@ -1,4 +1,4 @@
-package com.robert.kafka.kclient.sample;
+package com.robert.kafka.kclient.sample.spring;
 
 import java.io.IOException;
 

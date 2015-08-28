@@ -1,6 +1,7 @@
-package com.robert.kafka.kclient.sample;
+package com.robert.kafka.kclient.sample.api;
 
 import com.robert.kafka.kclient.core.KafkaProducer;
+import com.robert.kafka.kclient.sample.domain.Dog;
 
 /**
  * Sample for use {@link KafkaProducer} with Java API.

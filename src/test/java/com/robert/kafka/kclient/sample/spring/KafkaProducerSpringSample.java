@@ -1,10 +1,11 @@
-package com.robert.kafka.kclient.sample;
+package com.robert.kafka.kclient.sample.spring;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.alibaba.fastjson.JSON;
 import com.robert.kafka.kclient.core.KafkaProducer;
+import com.robert.kafka.kclient.sample.domain.Dog;
 
 /**
  * Sample for use {@link KafkaProducer} with Spring context.

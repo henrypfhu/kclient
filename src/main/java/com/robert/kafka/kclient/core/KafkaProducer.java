@@ -16,6 +16,7 @@ import kafka.producer.ProducerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
@@ -185,7 +186,7 @@ public class KafkaProducer {
 	}
 
 	public <T> void sendBean2Topic(String topicName, T bean) {
-		send2Topic(topicName, bean.toString());
+		send2Topic(topicName, JSON.toJSONString(bean));
 	}
 
 	public <T> void sendBean(String key, T bean) {
@@ -193,7 +194,7 @@ public class KafkaProducer {
 	}
 
 	public <T> void sendBean2Topic(String topicName, String key, T bean) {
-		send2Topic(topicName, key, bean.toString());
+		send2Topic(topicName, key, JSON.toJSONString(bean));
 	}
 
 	public <T> void sendBeans(Collection<T> beans) {
@@ -203,7 +204,7 @@ public class KafkaProducer {
 	public <T> void sendBeans2Topic(String topicName, Collection<T> beans) {
 		Collection<String> beanStrs = new ArrayList<String>();
 		for (T bean : beans) {
-			beanStrs.add(bean.toString());
+			beanStrs.add(JSON.toJSONString(bean));
 		}
 
 		send2Topic(topicName, beanStrs);
@@ -216,7 +217,7 @@ public class KafkaProducer {
 	public <T> void sendBeans2Topic(String topicName, Map<String, T> beans) {
 		Map<String, String> beansStr = new HashMap<String, String>();
 		for (Map.Entry<String, T> entry : beans.entrySet()) {
-			beansStr.put(entry.getKey(), entry.getValue().toString());
+			beansStr.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
 		}
 
 		send2Topic(topicName, beansStr);

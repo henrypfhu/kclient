@@ -6,7 +6,7 @@
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
 
-	<bean name="dogHandler" class="com.robert.kafka.kclient.sample.DogHandler" />
+	<bean name="dogHandler" class="com.robert.kafka.kclient.sample.api.DogHandler" />
 
 	<bean name="consumer" class="com.robert.kafka.kclient.core.KafkaConsumer" init-method="init">
 		<property name="propertiesFile" value="kafka-consumer.properties" />

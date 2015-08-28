@@ -1,4 +1,4 @@
-package com.robert.kafka.kclient.sample;
+package com.robert.kafka.kclient.sample.annotation;
 
 import java.io.IOException;
 

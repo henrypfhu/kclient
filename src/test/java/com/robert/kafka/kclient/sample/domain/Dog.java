@@ -1,4 +1,4 @@
-package com.robert.kafka.kclient.sample;
+package com.robert.kafka.kclient.sample.domain;
 
 /**
  * Sample bean for conversion between JSON and object.
