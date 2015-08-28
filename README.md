@@ -26,15 +26,41 @@
 
 ## 使用指南
 
-KClient提供了三种使用方法，
+KClient提供了三种使用方法，按照下面的步骤可快速构建Kafka生产者和消费者程序。
 
-**1.Java API** 
+**1.Java API**
+
+`TODO` 
 
 **2.Spring环境集成**
+
+`TODO`
  
 **3.服务源码注解**
 
+`TODO`
+
+## API简介
+
+**1.Producer API**
+
+`TODO`
+
+**2.Consumer API**
+
+`TODO`
+
+**3.消息处理器**
+
+`TODO`
+
+**4.消息处理器注解和启动**
+
+`TODO`
+
 ## 消息处理机模板项目
+
+`TODO`
 
 ## 架构设计
 
@@ -70,29 +96,38 @@ KClient提供了三种使用方法，
 
 优雅关机的重点在于：1. 如何知道JVM要退出; 2. 如何阻止Daemon的线程在JVM退出被杀掉而导致消息丢失; 3. 如果Worker线程在阻塞，如何唤起并退出。  
 
-第一个问题，如果一个后台程序运行在控制台的前台，通过Ctrl + C可以发送退出信号给JVM，也可以通过kill -2 PS_IS 或者 kill -15 PS_IS发送退出信号，但是不能发送kill -9 PS_IS, 否则进程会无条件强制退出。JVM收到退出信号后，会调用注册的钩子，我们通过的注册的JVM退出钩子进行优雅关机。
+*第一个问题*，如果一个后台程序运行在控制台的前台，通过Ctrl + C可以发送退出信号给JVM，也可以通过kill -2 PS_IS 或者 kill -15 PS_IS发送退出信号，但是不能发送kill -9 PS_IS, 否则进程会无条件强制退出。JVM收到退出信号后，会调用注册的钩子，我们通过的注册的JVM退出钩子进行优雅关机。
 
-第二个问题，线程分为Daemon线程和非Daemon线程，一个线程默认继承父线程的Daemon属性，如果当前线程池是由Daemon线程创建的，则Worker线程是Daemon线程。如果Worker线程是Daemon线程，我们需要在JVM退出钩子中等待Worker线程完成当前手头处理的消息，再退出JVM。如果不是Daemon线程，即使JVM收到退出信号，也得等待Worker线程退出后再退出，不会丢掉正在处理的消息。
+*第二个问题*，线程分为Daemon线程和非Daemon线程，一个线程默认继承父线程的Daemon属性，如果当前线程池是由Daemon线程创建的，则Worker线程是Daemon线程。如果Worker线程是Daemon线程，我们需要在JVM退出钩子中等待Worker线程完成当前手头处理的消息，再退出JVM。如果不是Daemon线程，即使JVM收到退出信号，也得等待Worker线程退出后再退出，不会丢掉正在处理的消息。
 
-第三个问题，在Worker线程从Kafka服务器消费消息的时候，Worker线程可能处于阻塞，这时需要中断线程以退出，没有消息被丢掉。在Worker线程处理业务时有可能有阻塞，例如：IO，网络IO，在指定退出时间内没有完成，我们也需要中断线程退出，这时会产生一个InterruptedException, 在异常处理的默认处理器中被捕捉，并写入错误日志，Worker线程随后退出。
-
-**4.API设计**
-
-consumer api
-producer api
-Handler类的集成结构
-注解
-boot
+*第三个问题*，在Worker线程从Kafka服务器消费消息的时候，Worker线程可能处于阻塞，这时需要中断线程以退出，没有消息被丢掉。在Worker线程处理业务时有可能有阻塞，例如：IO，网络IO，在指定退出时间内没有完成，我们也需要中断线程退出，这时会产生一个InterruptedException, 在异常处理的默认处理器中被捕捉，并写入错误日志，Worker线程随后退出。
 
 ## 性能压测
 
-同步线程模型
-异步线程模型，共享线程池，非共享线程池，固定线程池和可变线程池
+用例1： 轻量级服务同步线程模型和异步线程模型的性能对比。
+
+`TODO`
+
+用例2： 重量级服务同步线程模型和异步线程模型的性能对比。
+
+`TODO`
+
+用例3： 重量级服务异步线程模型中所有消费者流共享线程池和每个流独享线程池的性能对比。
+
+`TODO`
+
+用例4： 重量级服务异步线程模型中每个流独享线程池的对比的确定数量线程的线程池和线程数量可伸缩的线程池的性能对比。
+
+`TODO`
+
+Benchmark应该覆盖推送QPS，接收处理QPS以及单线程和多线程生产者的用例。
+
+`TODO`
 
 ## TODO
 
-1. 制作一个使用Spring Boot启动的项目模板
-2. 增加异常listener
+1. 开发一个使用Spring Boot启动的注解处理器项目模板。
+2. 增加异常Listener处理体系架构。
 
 ## QQ群/微信公众号
 - <a target="_blank" href="http://shang.qq.com/wpa/qunwpa?idkey=ff0d7d34f32c87dbd9aa56499a7478cd93e0e1d44288b9f6987a043818a1ad01"><img border="0" src="http://pub.idqqimg.com/wpa/images/group.png" alt="云时代网" title="云时代网"></a>
