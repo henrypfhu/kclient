@@ -3,6 +3,7 @@ package com.robert.kafka.kclient.core;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,6 +15,9 @@ import kafka.producer.ProducerConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 
 /**
  * This is a producer client which can be used to send the message or the pair
@@ -74,6 +78,8 @@ public class KafkaProducer {
 		ProducerConfig config = new ProducerConfig(properties);
 		producer = new Producer<String, String>(config);
 	}
+
+	// send string message
 
 	public void send(String message) {
 		send2Topic(null, message);
@@ -170,6 +176,91 @@ public class KafkaProducer {
 		if (!kms.isEmpty()) {
 			producer.send(kms);
 		}
+	}
+
+	// send bean message
+
+	public <T> void sendBean(T bean) {
+		sendBean2Topic(null, bean);
+	}
+
+	public <T> void sendBean2Topic(String topicName, T bean) {
+		send2Topic(topicName, bean.toString());
+	}
+
+	public <T> void sendBean(String key, T bean) {
+		sendBean2Topic(null, key, bean);
+	}
+
+	public <T> void sendBean2Topic(String topicName, String key, T bean) {
+		send2Topic(topicName, key, bean.toString());
+	}
+
+	public <T> void sendBeans(Collection<T> beans) {
+		sendBeans2Topic(null, beans);
+	}
+
+	public <T> void sendBeans2Topic(String topicName, Collection<T> beans) {
+		Collection<String> beanStrs = new ArrayList<String>();
+		for (T bean : beans) {
+			beanStrs.add(bean.toString());
+		}
+
+		send2Topic(topicName, beanStrs);
+	}
+
+	public <T> void sendBeans(Map<String, T> beans) {
+		sendBeans2Topic(null, beans);
+	}
+
+	public <T> void sendBeans2Topic(String topicName, Map<String, T> beans) {
+		Map<String, String> beansStr = new HashMap<String, String>();
+		for (Map.Entry<String, T> entry : beans.entrySet()) {
+			beansStr.put(entry.getKey(), entry.getValue().toString());
+		}
+
+		send2Topic(topicName, beansStr);
+	}
+
+	// send JSON Object message
+
+	public void sendObject(JSONObject jsonObject) {
+		sendObject2Topic(null, jsonObject);
+	}
+
+	public void sendObject2Topic(String topicName, JSONObject jsonObject) {
+		send2Topic(topicName, jsonObject.toJSONString());
+	}
+
+	public void sendObject(String key, JSONObject jsonObject) {
+		sendObject2Topic(null, key, jsonObject);
+	}
+
+	public void sendObject2Topic(String topicName, String key,
+			JSONObject jsonObject) {
+		send2Topic(topicName, key, jsonObject.toJSONString());
+	}
+
+	public void sendObjects(JSONArray jsonArray) {
+		sendObjects2Topic(null, jsonArray);
+	}
+
+	public void sendObjects2Topic(String topicName, JSONArray jsonArray) {
+		send2Topic(topicName, jsonArray.toJSONString());
+	}
+
+	public void sendObjects(Map<String, JSONObject> jsonObjects) {
+		sendObjects2Topic(null, jsonObjects);
+	}
+
+	public void sendObjects2Topic(String topicName,
+			Map<String, JSONObject> jsonObjects) {
+		Map<String, String> objectsStrs = new HashMap<String, String>();
+		for (Map.Entry<String, JSONObject> entry : jsonObjects.entrySet()) {
+			objectsStrs.put(entry.getKey(), entry.getValue().toJSONString());
+		}
+
+		send2Topic(topicName, objectsStrs);
 	}
 
 	public void close() {

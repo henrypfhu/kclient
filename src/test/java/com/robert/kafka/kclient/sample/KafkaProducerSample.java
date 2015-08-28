@@ -1,6 +1,5 @@
 package com.robert.kafka.kclient.sample;
 
-import com.alibaba.fastjson.JSON;
 import com.robert.kafka.kclient.core.KafkaProducer;
 
 /**
@@ -20,7 +19,7 @@ public class KafkaProducerSample {
 			Dog dog = new Dog();
 			dog.setName("Yours " + i);
 			dog.setId(i);
-			kafkaProducer.send2Topic("test", JSON.toJSONString(dog));
+			kafkaProducer.sendBean2Topic("test", dog);
 
 			System.out.format("Sending dog: %d \n", i + 1);
 
