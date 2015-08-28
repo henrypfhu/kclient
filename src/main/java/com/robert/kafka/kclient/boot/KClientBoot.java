@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.w3c.dom.Document;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.robert.kafka.kclient.core.KafkaConsumer;
@@ -253,7 +254,14 @@ public class KClientBoot implements ApplicationContextAware {
 					kafkaHandlerMeta.getBean(), parameter);
 
 			if (kafkaProducer != null) {
-				kafkaProducer.send(result.toString());
+				if (result instanceof JSONObject)
+					kafkaProducer.send(((JSONObject) result).toJSONString());
+				else if (result instanceof JSONArray)
+					kafkaProducer.send(((JSONArray) result).toJSONString());
+				else if (result instanceof Document)
+					kafkaProducer.send(((Document) result).getTextContent());
+				else
+					kafkaProducer.send(JSON.toJSONString(result));
 			}
 		} catch (IllegalAccessException e) {
 			// If annotated config is correct, this won't happen
