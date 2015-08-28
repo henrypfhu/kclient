@@ -319,7 +319,7 @@ public class KafkaConsumer {
 	}
 
 	private void shutdownThreadPool(ExecutorService threadPool, String alias) {
-		log.info("Start to shutdown the thead pool: %s", alias);
+		log.info("Start to shutdown the thead pool: {}", alias);
 
 		threadPool.shutdown(); // Disable new tasks from being submitted
 		try {
@@ -341,7 +341,7 @@ public class KafkaConsumer {
 			Thread.currentThread().interrupt();
 		}
 
-		log.info("Finally shutdown the thead pool: %s", alias);
+		log.info("Finally shutdown the thead pool: {}", alias);
 	}
 
 	public String getPropertiesFile() {
@@ -433,12 +433,12 @@ public class KafkaConsumer {
 					// exception
 					if (e instanceof InterruptedException) {
 						log.info(
-								"The worker [Thread ID: %d] has been interrupted when retrieving messages from kafka broker. Maybe the consumer is shutting down.",
+								"The worker [Thread ID: {}] has been interrupted when retrieving messages from kafka broker. Maybe the consumer is shutting down.",
 								Thread.currentThread().getId());
 						break;
 					} else {
 						log.error(
-								"The worker [Thread ID: %d] encounters an unknown exception when retrieving messages from kafka broker. Now try again.",
+								"The worker [Thread ID: {}] encounters an unknown exception when retrieving messages from kafka broker. Now try again.",
 								Thread.currentThread().getId());
 						continue;
 					}

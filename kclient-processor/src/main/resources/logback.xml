@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 所有日志进入all.log和控制台日志，错误日志进入error.log, 业务日志进入biz.log。 author: Robert Lee -->
+
+<configuration scan="true" scanPeriod="10 seconds">
+
+	<contextName>kclient</contextName>
+
+	<!--日志路径 -->
+	<property name="logback.logs.path" value="/home/robert/logs/" />
+	<!--项目名 -->
+	<property name="logback.project.name" value="kclient" />
+	<!--日志文件名的日期格式 -->
+	<timestamp key="byDay" datePattern="yyyyMMdd" />
+
+	<!-- 控制台日志 -->
+	<appender name="stdout.default" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder charset="UTF-8">
+			<pattern>[%level]\t%date{yyyy-MM-dd HH:mm:ss}\t%thread\t%logger\t%msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- 业务日志 -->
+	<appender name="biz.log" class="ch.qos.logback.core.FileAppender">
+		<file>${logback.logs.path}${logback.project.name}/biz_${byDay}.log
+		</file>
+		<encoder charset="UTF-8">
+			<pattern>[%level]\t%date{yyyy-MM-dd HH:mm:ss}\t%thread\t%logger\t%msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- 所有日志 -->
+	<appender name="all.log" class="ch.qos.logback.core.FileAppender">
+		<file>${logback.logs.path}${logback.project.name}/all_${byDay}.log
+		</file>
+		<encoder charset="UTF-8">
+			<pattern>[%level]\t%date{yyyy-MM-dd HH:mm:ss}\t%thread\t%logger\t%msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- 所有错误日志 -->
+	<appender name="error.log" class="ch.qos.logback.core.FileAppender">
+		<file>${logback.logs.path}${logback.project.name}/error_${byDay}.log
+		</file>
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		<encoder charset="UTF-8">
+			<pattern>[%level]\t%date{yyyy-MM-dd HH:mm:ss}\t%thread\t%logger\t%msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="com.robert" level="DEBUG">
+		<appender-ref ref="biz.log" />
+	</logger>
+
+	<root level="INFO">
+		<appender-ref ref="stdout.default" />
+		<appender-ref ref="all.log" />
+		<appender-ref ref="error.log" />
+	</root>
+
+</configuration>

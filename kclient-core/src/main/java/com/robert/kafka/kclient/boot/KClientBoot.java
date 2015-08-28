@@ -337,4 +337,12 @@ public class KClientBoot implements ApplicationContextAware {
 			kafkaProduer.close();
 		}
 	}
+
+	public List<KafkaConsumer> getKafkaConsumers() {
+		return kafkaConsumers;
+	}
+
+	public List<KafkaProducer> getKafkaProducers() {
+		return kafkaProducers;
+	}
 }
