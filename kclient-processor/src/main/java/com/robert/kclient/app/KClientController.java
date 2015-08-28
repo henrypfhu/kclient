@@ -24,10 +24,6 @@ public class KClientController {
 				+ ", Consumer: " + getKClientBoot().getKafkaConsumers().size();
 	}
 
-	private KClientBoot getKClientBoot() {
-		return (KClientBoot) ctxKafkaProcessor.getBean("kClientBoot");
-	}
-
 	@RequestMapping("/restart")
 	public String restart() {
 		getKClientBoot().shutdownAll();
@@ -35,5 +31,9 @@ public class KClientController {
 				"kafka-application.xml");
 
 		return "KClient processor is restarted.";
+	}
+
+	private KClientBoot getKClientBoot() {
+		return (KClientBoot) ctxKafkaProcessor.getBean("kClientBoot");
 	}
 }
