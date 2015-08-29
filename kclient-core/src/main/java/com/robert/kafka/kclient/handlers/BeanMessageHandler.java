@@ -1,9 +1,12 @@
 package com.robert.kafka.kclient.handlers;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.robert.kafka.kclient.excephandler.ExceptionHandler;
 
 /**
  * This class converts the JSON string to a single bean, and then make it
@@ -18,8 +21,23 @@ public abstract class BeanMessageHandler<T> extends SafelyMessageHandler {
 			.getLogger(BeanMessageHandler.class);
 
 	private Class<T> clazz;
-
+	
 	public BeanMessageHandler(Class<T> clazz) {
+		super();
+
+		this.clazz = clazz;
+	}
+
+	public BeanMessageHandler(Class<T> clazz, ExceptionHandler excepHandler) {
+		super(excepHandler);
+
+		this.clazz = clazz;
+	}
+
+	public BeanMessageHandler(Class<T> clazz,
+			List<ExceptionHandler> excepHandlers) {
+		super(excepHandlers);
+
 		this.clazz = clazz;
 	}
 

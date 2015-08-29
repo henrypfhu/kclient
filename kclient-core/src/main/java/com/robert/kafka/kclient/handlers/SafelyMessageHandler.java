@@ -1,10 +1,17 @@
 package com.robert.kafka.kclient.handlers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.robert.kafka.kclient.excephandler.DefaultExceptionHandler;
+import com.robert.kafka.kclient.excephandler.ExceptionHandler;
+
 /**
- * This is an abstract class which log exception in log file if it happens.
+ * This is an abstract class which handle exception by exception handlers if it
+ * happens.
  * 
  * @author Robert Lee
  * @since Aug 21, 2015
@@ -14,26 +21,62 @@ public abstract class SafelyMessageHandler implements MessageHandler {
 	protected static Logger log = LoggerFactory
 			.getLogger(SafelyMessageHandler.class);
 
-	// Record the error log for data recovery or wash data by the logs
+	private List<ExceptionHandler> excepHandlers = new ArrayList<ExceptionHandler>();
 
-	protected static Logger errorRunLog = LoggerFactory.getLogger("error.run."
-			+ SafelyMessageHandler.class);
-	protected static Logger errorShutdownlog = LoggerFactory
-			.getLogger("error.shutdown." + SafelyMessageHandler.class);
+	{
+		excepHandlers.add(new DefaultExceptionHandler());
+	}
+
+	public SafelyMessageHandler() {
+
+	}
+
+	public SafelyMessageHandler(ExceptionHandler excepHandler) {
+		excepHandlers.add(excepHandler);
+	}
+
+	public SafelyMessageHandler(List<ExceptionHandler> excepHandlers) {
+		excepHandlers.addAll(excepHandlers);
+	}
 
 	public void execute(String message) {
 		try {
 			doExecute(message);
 		} catch (Throwable t) {
-			if (t instanceof InterruptedException)
-				errorRunLog.error(
-						"Maybe it is shutting down. Or interruped when handing the message:\t"
-								+ message, t);
-			else
-				errorShutdownlog.error("Failed to handle the message: \t"
-						+ message, t);
+			handleException(t, message);
 		}
 	}
 
+	protected void handleException(Throwable t, String message) {
+		for (ExceptionHandler excepHandler : excepHandlers) {
+			if (excepHandler.support(t)) {
+				try {
+					excepHandler.handle(t, message);
+				} catch (Exception e) {
+					log.error(
+							"Exception hanppens when the handler {} is handling the exception {} and the message {}. Please check if the exception handler is configured properly.",
+							excepHandler.getClass(), t.getClass(), message);
+					log.error(
+							"The stack of the new exception on exception is, ",
+							e);
+				}
+			}
+		}
+
+	}
+
 	protected abstract void doExecute(String message);
+
+	public List<ExceptionHandler> getExcepHandlers() {
+		return excepHandlers;
+	}
+
+	public void setExcepHandlers(List<ExceptionHandler> excepHandlers) {
+		excepHandlers.addAll(excepHandlers);
+	}
+
+	public void addExcepHandler(ExceptionHandler excepHandler) {
+		excepHandlers.add(excepHandler);
+	}
+
 }
