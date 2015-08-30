@@ -21,7 +21,7 @@ public abstract class BeanMessageHandler<T> extends SafelyMessageHandler {
 			.getLogger(BeanMessageHandler.class);
 
 	private Class<T> clazz;
-	
+
 	public BeanMessageHandler(Class<T> clazz) {
 		super();
 

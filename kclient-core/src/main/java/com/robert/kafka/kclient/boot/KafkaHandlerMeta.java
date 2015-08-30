@@ -1,6 +1,8 @@
 package com.robert.kafka.kclient.boot;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Used to store the handler related information by reflection. These
@@ -21,6 +23,8 @@ public class KafkaHandlerMeta {
 	private InputConsumer inputConsumer;
 
 	private OutputProducer outputProducer;
+
+	private Map<ErrorHandler, Method> errorHandlers = new HashMap<ErrorHandler, Method>();
 
 	public Object getBean() {
 		return bean;
@@ -61,4 +65,21 @@ public class KafkaHandlerMeta {
 	public void setOutputProducer(OutputProducer outputProducer) {
 		this.outputProducer = outputProducer;
 	}
+
+	public Map<ErrorHandler, Method> getErrorHandlers() {
+		return errorHandlers;
+	}
+
+	public void setErrorHandlers(Map<ErrorHandler, Method> errorHandlers) {
+		this.errorHandlers = errorHandlers;
+	}
+
+	public void addErrorHandlers(Map<ErrorHandler, Method> errorHandlers) {
+		this.errorHandlers.putAll(errorHandlers);
+	}
+
+	public void addErrorHandlers(ErrorHandler errorHandler, Method method) {
+		this.errorHandlers.put(errorHandler, method);
+	}
+
 }

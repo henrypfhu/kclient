@@ -6,12 +6,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 
 import com.alibaba.fastjson.JSON;
@@ -19,12 +21,16 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.robert.kafka.kclient.core.KafkaConsumer;
 import com.robert.kafka.kclient.core.KafkaProducer;
+import com.robert.kafka.kclient.excephandler.ExceptionHandler;
 import com.robert.kafka.kclient.handlers.BeanMessageHandler;
 import com.robert.kafka.kclient.handlers.BeansMessageHandler;
 import com.robert.kafka.kclient.handlers.DocumentMessageHandler;
 import com.robert.kafka.kclient.handlers.MessageHandler;
 import com.robert.kafka.kclient.handlers.ObjectMessageHandler;
 import com.robert.kafka.kclient.handlers.ObjectsMessageHandler;
+import com.robert.kafka.kclient.reflection.util.AnnotationHandler;
+import com.robert.kafka.kclient.reflection.util.AnnotationTranversor;
+import com.robert.kafka.kclient.reflection.util.TranversorContext;
 
 /**
  * This is the starter of the annotated message handlers. This class is loaded
@@ -67,56 +73,109 @@ public class KClientBoot implements ApplicationContextAware {
 
 		String[] kafkaHandlerBeanNames = applicationContext
 				.getBeanNamesForAnnotation(KafkaHandlers.class);
-
 		for (String kafkaHandlerBeanName : kafkaHandlerBeanNames) {
 			Object kafkaHandlerBean = applicationContext
 					.getBean(kafkaHandlerBeanName);
-
 			Class<? extends Object> kafkaHandlerBeanClazz = kafkaHandlerBean
 					.getClass();
+			Map<Class<? extends Annotation>, Map<Method, Annotation>> mapData = extractAnnotationMaps(kafkaHandlerBeanClazz);
 
-			for (Method kafkaHandlerMethod : kafkaHandlerBeanClazz.getMethods()) {
-				InputConsumer inputConsumer = null;
-				OutputProducer outputProduer = null;
-				for (Annotation kafkaHandlerAnnotation : kafkaHandlerMethod
-						.getAnnotations()) {
-					if (kafkaHandlerAnnotation instanceof InputConsumer) {
-						if (inputConsumer != null)
-							throw new IllegalArgumentException(
-									"Duplicated InputConsumer in a single handler method.");
-
-						inputConsumer = (InputConsumer) kafkaHandlerAnnotation;
-					} else if (kafkaHandlerAnnotation instanceof OutputProducer) {
-						if (outputProduer != null)
-							throw new IllegalArgumentException(
-									"Duplicated InputConsumer in a single handler method.");
-
-						outputProduer = (OutputProducer) kafkaHandlerAnnotation;
-					}
-				}
-
-				if (inputConsumer != null) {
-					KafkaHandlerMeta kafkaHandlerMeta = new KafkaHandlerMeta();
-					kafkaHandlerMeta.setInputConsumer(inputConsumer);
-					kafkaHandlerMeta.setOutputProducer(outputProduer);
-
-					kafkaHandlerMeta.setBean(kafkaHandlerBean);
-					kafkaHandlerMeta.setMethod(kafkaHandlerMethod);
-
-					Parameter[] kafkaHandlerParameters = kafkaHandlerMethod
-							.getParameters();
-					if (kafkaHandlerParameters.length != 1)
-						throw new IllegalArgumentException(
-								"The kafka handler method can contains only one parameter.");
-					kafkaHandlerMeta.setParameterType(kafkaHandlerParameters[0]
-							.getType());
-
-					meta.add(kafkaHandlerMeta);
-				}
-			}
+			meta.addAll(convertAnnotationMaps2Meta(mapData, kafkaHandlerBean));
 		}
 
 		return meta;
+	}
+
+	protected List<KafkaHandlerMeta> convertAnnotationMaps2Meta(
+			Map<Class<? extends Annotation>, Map<Method, Annotation>> mapData,
+			Object bean) {
+		List<KafkaHandlerMeta> meta = new ArrayList<KafkaHandlerMeta>();
+
+		Map<Method, Annotation> inputConsumerMap = mapData
+				.get(InputConsumer.class);
+		Map<Method, Annotation> outputProducerMap = mapData
+				.get(OutputProducer.class);
+		Map<Method, Annotation> exceptionHandlerMap = mapData
+				.get(ErrorHandler.class);
+
+		for (Map.Entry<Method, Annotation> entry : inputConsumerMap.entrySet()) {
+			InputConsumer inputConsumer = (InputConsumer) entry.getValue();
+
+			KafkaHandlerMeta kafkaHandlerMeta = new KafkaHandlerMeta();
+
+			kafkaHandlerMeta.setBean(bean);
+			kafkaHandlerMeta.setMethod(entry.getKey());
+
+			Parameter[] kafkaHandlerParameters = entry.getKey().getParameters();
+			if (kafkaHandlerParameters.length != 1)
+				throw new IllegalArgumentException(
+						"The kafka handler method can contains only one parameter.");
+			kafkaHandlerMeta.setParameterType(kafkaHandlerParameters[0]
+					.getType());
+
+			kafkaHandlerMeta.setInputConsumer(inputConsumer);
+
+			if (outputProducerMap != null
+					&& outputProducerMap.containsKey(entry.getKey()))
+				kafkaHandlerMeta
+						.setOutputProducer((OutputProducer) outputProducerMap
+								.get(entry.getKey()));
+
+			if (exceptionHandlerMap != null)
+				for (Map.Entry<Method, Annotation> excepHandlerEntry : exceptionHandlerMap
+						.entrySet()) {
+					ErrorHandler eh = (ErrorHandler) excepHandlerEntry
+							.getValue();
+					if (StringUtils.isEmpty(eh.topic())
+							|| eh.topic().equals(inputConsumer.topic())) {
+						kafkaHandlerMeta.addErrorHandlers((ErrorHandler) eh,
+								excepHandlerEntry.getKey());
+					}
+				}
+
+			meta.add(kafkaHandlerMeta);
+		}
+
+		return meta;
+	}
+
+	protected Map<Class<? extends Annotation>, Map<Method, Annotation>> extractAnnotationMaps(
+			Class<? extends Object> clazz) {
+		AnnotationTranversor<Class<? extends Annotation>, Method, Annotation> annotationTranversor = new AnnotationTranversor<Class<? extends Annotation>, Method, Annotation>(
+				clazz);
+
+		Map<Class<? extends Annotation>, Map<Method, Annotation>> data = annotationTranversor
+				.tranverseAnnotation(new AnnotationHandler<Class<? extends Annotation>, Method, Annotation>() {
+
+					public void handleMethodAnnotation(
+							Class<? extends Object> clazz,
+							Method method,
+							Annotation annotation,
+							TranversorContext<Class<? extends Annotation>, Method, Annotation> context) {
+						if (annotation instanceof InputConsumer)
+							context.addEntry(InputConsumer.class, method,
+									annotation);
+						else if (annotation instanceof OutputProducer)
+							context.addEntry(OutputProducer.class, method,
+									annotation);
+						else
+							context.addEntry(ErrorHandler.class, method,
+									annotation);
+					}
+
+					public void handleClassAnnotation(
+							Class<? extends Object> clazz,
+							Annotation annotation,
+							TranversorContext<Class<? extends Annotation>, Method, Annotation> context) {
+						if (annotation instanceof KafkaHandlers)
+							log.warn(
+									"There is some other annotation {} rather than @KafkaHandlers in the handler class {}.",
+									annotation.getClass().getName(),
+									clazz.getName());
+					}
+				});
+
+		return data;
 	}
 
 	protected void createKafkaHandler(final KafkaHandlerMeta kafkaHandlerMeta) {
@@ -124,23 +183,24 @@ public class KClientBoot implements ApplicationContextAware {
 				.getParameterType();
 
 		KafkaProducer kafkaProducer = createProducer(kafkaHandlerMeta);
+		List<ExceptionHandler> excepHandlers = createExceptionHandlers(kafkaHandlerMeta);
 
 		MessageHandler beanMessageHandler = null;
 		if (paramClazz.isAssignableFrom(JSONObject.class)) {
 			beanMessageHandler = createObjectHandler(kafkaHandlerMeta,
-					kafkaProducer);
+					kafkaProducer, excepHandlers);
 		} else if (paramClazz.isAssignableFrom(JSONArray.class)) {
 			beanMessageHandler = createObjectsHandler(kafkaHandlerMeta,
-					kafkaProducer);
+					kafkaProducer, excepHandlers);
 		} else if (List.class.isAssignableFrom(Document.class)) {
 			beanMessageHandler = createDocumentHandler(kafkaHandlerMeta,
-					kafkaProducer);
+					kafkaProducer, excepHandlers);
 		} else if (List.class.isAssignableFrom(paramClazz)) {
 			beanMessageHandler = createBeansHandler(kafkaHandlerMeta,
-					kafkaProducer);
+					kafkaProducer, excepHandlers);
 		} else {
 			beanMessageHandler = createBeanHandler(kafkaHandlerMeta,
-					kafkaProducer);
+					kafkaProducer, excepHandlers);
 		}
 
 		KafkaConsumer kafkaConsumer = createConsumer(kafkaHandlerMeta,
@@ -149,11 +209,70 @@ public class KClientBoot implements ApplicationContextAware {
 
 	}
 
+	private List<ExceptionHandler> createExceptionHandlers(
+			final KafkaHandlerMeta kafkaHandlerMeta) {
+		List<ExceptionHandler> excepHandlers = new ArrayList<ExceptionHandler>();
+
+		for (final Map.Entry<ErrorHandler, Method> errorHandler : kafkaHandlerMeta
+				.getErrorHandlers().entrySet()) {
+			ExceptionHandler exceptionHandler = new ExceptionHandler() {
+				public boolean support(Throwable t) {
+					// We handle the exception when the classes are exactly same
+					return errorHandler.getKey().getClass() == t.getClass();
+				}
+
+				public void handle(Throwable t, String message) {
+
+					Method excepHandlerMethod = errorHandler.getValue();
+					try {
+						excepHandlerMethod.invoke(kafkaHandlerMeta.getBean(),
+								t, message);
+
+					} catch (IllegalAccessException e) {
+						// If annotated exception handler is correct, this won't
+						// happen
+						log.debug(
+								"No permission to access the annotated exception handler.",
+								e);
+						throw new IllegalStateException(
+								"No permission to access the annotated exception handler. Please check annotated config.",
+								e);
+					} catch (IllegalArgumentException e) {
+						// If annotated exception handler is correct, this won't
+						// happen
+						log.debug(
+								"The parameter passed in doesn't match the annotated exception handler's.",
+								e);
+						throw new IllegalStateException(
+								"The parameter passed in doesn't match the annotated exception handler's. Please check annotated config.",
+								e);
+					} catch (InvocationTargetException e) {
+						// If the exception during handling exception occurs,
+						// throw it, in SafelyMessageHandler, this will be
+						// processed
+						log.debug(
+								"Failed to call the annotated exception handler.",
+								e);
+						throw new IllegalStateException(
+								"Failed to call the annotated exception handler. Please check if the handler can handle the biz without any exception.",
+								e);
+					}
+				}
+			};
+
+			excepHandlers.add(exceptionHandler);
+		}
+
+		return excepHandlers;
+	}
+
 	protected ObjectMessageHandler<JSONObject> createObjectHandler(
 			final KafkaHandlerMeta kafkaHandlerMeta,
-			final KafkaProducer kafkaProducer) {
+			final KafkaProducer kafkaProducer,
+			List<ExceptionHandler> excepHandlers) {
 
-		ObjectMessageHandler<JSONObject> objectMessageHandler = new ObjectMessageHandler<JSONObject>() {
+		ObjectMessageHandler<JSONObject> objectMessageHandler = new ObjectMessageHandler<JSONObject>(
+				excepHandlers) {
 			@Override
 			protected void doExecuteObject(JSONObject jsonObject) {
 				invokeHandler(kafkaHandlerMeta, kafkaProducer, jsonObject);
@@ -166,9 +285,11 @@ public class KClientBoot implements ApplicationContextAware {
 
 	protected ObjectsMessageHandler<JSONArray> createObjectsHandler(
 			final KafkaHandlerMeta kafkaHandlerMeta,
-			final KafkaProducer kafkaProducer) {
+			final KafkaProducer kafkaProducer,
+			List<ExceptionHandler> excepHandlers) {
 
-		ObjectsMessageHandler<JSONArray> objectMessageHandler = new ObjectsMessageHandler<JSONArray>() {
+		ObjectsMessageHandler<JSONArray> objectMessageHandler = new ObjectsMessageHandler<JSONArray>(
+				excepHandlers) {
 			@Override
 			protected void doExecuteObjects(JSONArray jsonArray) {
 				invokeHandler(kafkaHandlerMeta, kafkaProducer, jsonArray);
@@ -180,9 +301,11 @@ public class KClientBoot implements ApplicationContextAware {
 
 	protected DocumentMessageHandler createDocumentHandler(
 			final KafkaHandlerMeta kafkaHandlerMeta,
-			final KafkaProducer kafkaProducer) {
+			final KafkaProducer kafkaProducer,
+			List<ExceptionHandler> excepHandlers) {
 
-		DocumentMessageHandler documentMessageHandler = new DocumentMessageHandler() {
+		DocumentMessageHandler documentMessageHandler = new DocumentMessageHandler(
+				excepHandlers) {
 			@Override
 			protected void doExecuteDocument(Document document) {
 				invokeHandler(kafkaHandlerMeta, kafkaProducer, document);
@@ -195,12 +318,13 @@ public class KClientBoot implements ApplicationContextAware {
 	@SuppressWarnings("unchecked")
 	protected BeanMessageHandler<Object> createBeanHandler(
 			final KafkaHandlerMeta kafkaHandlerMeta,
-			final KafkaProducer kafkaProducer) {
+			final KafkaProducer kafkaProducer,
+			List<ExceptionHandler> excepHandlers) {
 
 		// We have to abandon the type check
 		@SuppressWarnings("rawtypes")
 		BeanMessageHandler beanMessageHandler = new BeanMessageHandler(
-				kafkaHandlerMeta.getParameterType()) {
+				kafkaHandlerMeta.getParameterType(), excepHandlers) {
 			@Override
 			protected void doExecuteBean(Object bean) {
 				invokeHandler(kafkaHandlerMeta, kafkaProducer, bean);
@@ -214,12 +338,13 @@ public class KClientBoot implements ApplicationContextAware {
 	@SuppressWarnings("unchecked")
 	protected BeansMessageHandler<Object> createBeansHandler(
 			final KafkaHandlerMeta kafkaHandlerMeta,
-			final KafkaProducer kafkaProducer) {
+			final KafkaProducer kafkaProducer,
+			List<ExceptionHandler> excepHandlers) {
 
 		// We have to abandon the type check
 		@SuppressWarnings("rawtypes")
 		BeansMessageHandler beanMessageHandler = new BeansMessageHandler(
-				kafkaHandlerMeta.getParameterType()) {
+				kafkaHandlerMeta.getParameterType(), excepHandlers) {
 			@Override
 			protected void doExecuteBeans(List bean) {
 				invokeHandler(kafkaHandlerMeta, kafkaProducer, bean);

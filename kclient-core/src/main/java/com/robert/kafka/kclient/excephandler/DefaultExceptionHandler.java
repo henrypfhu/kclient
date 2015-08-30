@@ -25,7 +25,7 @@ public class DefaultExceptionHandler implements ExceptionHandler {
 	public boolean support(Throwable t) {
 		return true;
 	}
-	
+
 	public void handle(Throwable t, String message) {
 		if (t instanceof InterruptedException)
 			errorRunLog.error(

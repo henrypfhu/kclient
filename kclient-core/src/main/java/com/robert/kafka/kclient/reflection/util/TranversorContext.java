@@ -14,6 +14,11 @@ public class TranversorContext<C, K, V> {
 			data.put(cat, map);
 		}
 
+		if (map.containsKey(key))
+			throw new IllegalArgumentException(String.format(
+					"Duplicated Annotation {} in a single handler method {}.",
+					value.getClass(), key));
+
 		map.put(key, value);
 	}
 
