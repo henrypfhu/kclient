@@ -45,7 +45,7 @@ KClient提供了三种使用方法，对于每一种方法，按照下面的步�
 			<version>0.0.1</version>
 		</dependency>
 ```
-
+&nbsp;
 3. 根据[Kafka官方文档](http://kafka.apache.org/documentation.html)搭建Kafka环境，并创建两个Topic， test1和test2。
 
 4. 然后，从Kafka安装目录的config目录下拷贝kafka-consumer.properties和kafka-producer.properties到你的项目类路径下，通常是src/main/resources目录。
