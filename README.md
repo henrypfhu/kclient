@@ -177,7 +177,57 @@ public class DogHandler extends BeanMessageHandler<Dog> {
  
 **3.服务源码注解**
 
-`TODO`
+KClient提供了类似Spring声明式的编程方法，使用注解声明Kafka处理器方法，所有的线程模型、异常处理、服务启动和关闭等都由后台服务自动完成，极大程度的简化了API的使用方法，提供了开发者的工作效率。
+
+***注解声明Kafka消息处理器：***
+
+```java
+@KafkaHandlers
+public class AnnotatedDogHandler {
+	@InputConsumer(propertiesFile = "kafka-consumer.properties", topic = "test", streamNum = 1)
+	@OutputProducer(propertiesFile = "kafka-producer.properties", defaultTopic = "test1")
+	public Cat dogHandler(Dog dog) {
+		System.out.println("Annotated dogHandler handles: " + dog);
+
+		return new Cat(dog);
+	}
+
+	@InputConsumer(propertiesFile = "kafka-consumer.properties", topic = "test1", streamNum = 1)
+	public void catHandler(Cat cat) throws IOException {
+		System.out.println("Annotated catHandler handles: " + cat);
+
+		throw new IOException("Man made exception.");
+	}
+
+	@ErrorHandler(exception = IOException.class, topic = "test1")
+	public void ioExceptionHandler(IOException e, String message) {
+		System.out.println("Annotated excepHandler handles: " + e);
+	}
+}
+```
+
+***注解声明Kafka消息处理器：***
+
+```java
+public static void main(String[] args) {
+	ApplicationContext ac = new ClassPathXmlApplicationContext(
+			"annotated-kafka-consumer.xml");
+
+	try {
+		System.in.read();
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+}
+```
+
+***Spring环境配置：***
+
+```xml
+<bean name="kClientBoot" class="com.robert.kafka.kclient.boot.KClientBoot" init-method="init"/>
+
+<context:component-scan base-package="com.robert.kafka.kclient.sample.annotation" />
+```
 
 ## API简介
 
