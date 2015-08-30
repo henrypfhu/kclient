@@ -3,6 +3,20 @@ package com.robert.kafka.kclient.reflection.util;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Used to collect the traversal result.
+ * 
+ * @author Robert Lee
+ * @since Aug 21, 2015
+ *
+ * @param <C>
+ *            category type for the data entry
+ * @param <K>
+ *            key type for the data entry
+ * @param <V>
+ *            value type for the date entry
+ */
+
 public class TranversorContext<C, K, V> {
 
 	private Map<C, Map<K, V>> data = new HashMap<C, Map<K, V>>();

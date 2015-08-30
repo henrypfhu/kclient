@@ -132,8 +132,7 @@ Benchmark应该覆盖推送QPS，接收处理QPS以及单线程和多线程生�
 
 ## TODO
 
-1. 增加异常Listener处理体系架构, 已经完成，还没加注释。
-2. KClient处理器项目中管理Rest服务的丰富，增加对线程池的监控，以及消息处理性能的监控。
+1. KClient处理器项目中管理Rest服务的丰富，增加对线程池的监控，以及消息处理性能的监控。
 
 ## QQ群/微信公众号
 - <a target="_blank" href="http://shang.qq.com/wpa/qunwpa?idkey=ff0d7d34f32c87dbd9aa56499a7478cd93e0e1d44288b9f6987a043818a1ad01"><img border="0" src="http://pub.idqqimg.com/wpa/images/group.png" alt="云时代网" title="云时代网"></a>

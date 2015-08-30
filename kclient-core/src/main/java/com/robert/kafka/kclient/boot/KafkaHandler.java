@@ -6,6 +6,13 @@ import com.robert.kafka.kclient.core.KafkaConsumer;
 import com.robert.kafka.kclient.core.KafkaProducer;
 import com.robert.kafka.kclient.excephandler.ExceptionHandler;
 
+/**
+ * The context class which stores the runtime Kafka processor reference.
+ * 
+ * @author Robert Lee
+ * @since Aug 21, 2015
+ *
+ */
 public class KafkaHandler {
 	private KafkaConsumer kafkaConsumer;
 
