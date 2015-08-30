@@ -313,36 +313,37 @@ public interface MessageHandler {
 ***安全处理异常抽象类:***
 
 ```java
-public void execute(String message) {
-	try {
-		doExecute(message);
-	} catch (Throwable t) {
-		handleException(t, message);
+public abstract class SafelyMessageHandler implements MessageHandler {
+	public void execute(String message) {
+		try {
+			doExecute(message);
+		} catch (Throwable t) {
+			handleException(t, message);
+		}
 	}
-}
-
-protected void handleException(Throwable t, String message) {
-	for (ExceptionHandler excepHandler : excepHandlers) {
-		if (t.getClass() == IllegalStateException.class
-				&& t.getCause() != null
-				&& t.getCause().getClass() == InvocationTargetException.class
-				&& t.getCause().getCause() != null)
-			t = t.getCause().getCause();
-
-		if (excepHandler.support(t)) {
-			try {
-				excepHandler.handle(t, message);
-			} catch (Exception e) {
-				log.error(
-						"Exception hanppens when the handler {} is handling the exception {} and the message {}. Please check if the exception handler is configured properly.",
-						excepHandler.getClass(), t.getClass(), message);
-				log.error(
-						"The stack of the new exception on exception is, ",
-						e);
+	
+	protected void handleException(Throwable t, String message) {
+		for (ExceptionHandler excepHandler : excepHandlers) {
+			if (t.getClass() == IllegalStateException.class
+					&& t.getCause() != null
+					&& t.getCause().getClass() == InvocationTargetException.class
+					&& t.getCause().getCause() != null)
+				t = t.getCause().getCause();
+	
+			if (excepHandler.support(t)) {
+				try {
+					excepHandler.handle(t, message);
+				} catch (Exception e) {
+					log.error(
+							"Exception hanppens when the handler {} is handling the exception {} and the message {}. Please check if the exception handler is configured properly.",
+							excepHandler.getClass(), t.getClass(), message);
+					log.error(
+							"The stack of the new exception on exception is, ",
+							e);
+				}
 			}
 		}
 	}
-
 }
 
 protected abstract void doExecute(String message);
@@ -353,7 +354,6 @@ protected abstract void doExecute(String message);
 ```java
 
 public abstract class BeanMessageHandler<T> extends SafelyMessageHandler {...}
-
 public abstract class BeansMessageHandler<T> extends SafelyMessageHandler {...}
 public abstract class DocumentMessageHandler extends SafelyMessageHandler {...}
 public abstract class ObjectMessageHandler extends SafelyMessageHandler {...}
@@ -430,7 +430,7 @@ public @interface ErrorHandler {
 
 1.从本项目下载kclient-processor项目模板，并且根据业务需要修改pom.xml后导入Eclipse。
 
-2.根据业务需要更改com.robert.kclient.app.handler.AnimalsHandler类名称，并且根据业务需要修改处理器的注解。这里，可以导入业务服务对消息进行处理。
+2.根据业务需要更改`com.robert.kclient.app.handler.AnimalsHandler`类名称，并且根据业务需要修改处理器的注解。这里，可以导入业务服务对消息进行处理。
 
 ```java
 @KafkaHandlers
@@ -474,7 +474,7 @@ KClient模板项目提供了后台管理接口来监控和管理消息处理服�
 
 3.重启服务 - 重新启动服务。
 
->curl http://localhost:8080/status
+>curl http://localhost:8080/restart
 
 ## 架构设计
 
@@ -510,7 +510,7 @@ KClient模板项目提供了后台管理接口来监控和管理消息处理服�
 
 优雅关机的重点在于：1. 如何知道JVM要退出; 2. 如何阻止Daemon的线程在JVM退出被杀掉而导致消息丢失; 3. 如果Worker线程在阻塞，如何唤起并退出。  
 
-***第一个问题:***，如果一个后台程序运行在控制台的前台，通过Ctrl + C可以发送退出信号给JVM，也可以通过kill -2 PS_IS 或者 kill -15 PS_IS发送退出信号，但是不能发送kill -9 PS_IS, 否则进程会无条件强制退出。JVM收到退出信号后，会调用注册的钩子，我们通过的注册的JVM退出钩子进行优雅关机。
+***第一个问题:***，如果一个后台程序运行在控制台的前台，通过`Ctrl + C`可以发送退出信号给JVM，也可以通过`kill -2 PS_IS` 或者 `kill -15 PS_IS`发送退出信号，但是不能发送`kill -9 PS_IS`, 否则进程会无条件强制退出。JVM收到退出信号后，会调用注册的钩子，我们通过的注册的JVM退出钩子进行优雅关机。
 
 ***第二个问题:***，线程分为Daemon线程和非Daemon线程，一个线程默认继承父线程的Daemon属性，如果当前线程池是由Daemon线程创建的，则Worker线程是Daemon线程。如果Worker线程是Daemon线程，我们需要在JVM退出钩子中等待Worker线程完成当前手头处理的消息，再退出JVM。如果不是Daemon线程，即使JVM收到退出信号，也得等待Worker线程退出后再退出，不会丢掉正在处理的消息。
 
