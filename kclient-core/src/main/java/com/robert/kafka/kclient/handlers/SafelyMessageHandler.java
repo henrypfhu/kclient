@@ -1,5 +1,6 @@
 package com.robert.kafka.kclient.handlers;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,11 +33,11 @@ public abstract class SafelyMessageHandler implements MessageHandler {
 	}
 
 	public SafelyMessageHandler(ExceptionHandler excepHandler) {
-		excepHandlers.add(excepHandler);
+		this.excepHandlers.add(excepHandler);
 	}
 
 	public SafelyMessageHandler(List<ExceptionHandler> excepHandlers) {
-		excepHandlers.addAll(excepHandlers);
+		this.excepHandlers.addAll(excepHandlers);
 	}
 
 	public void execute(String message) {
@@ -49,6 +50,12 @@ public abstract class SafelyMessageHandler implements MessageHandler {
 
 	protected void handleException(Throwable t, String message) {
 		for (ExceptionHandler excepHandler : excepHandlers) {
+			if (t.getClass() == IllegalStateException.class
+					&& t.getCause() != null
+					&& t.getCause().getClass() == InvocationTargetException.class
+					&& t.getCause().getCause() != null)
+				t = t.getCause().getCause();
+
 			if (excepHandler.support(t)) {
 				try {
 					excepHandler.handle(t, message);
@@ -72,11 +79,11 @@ public abstract class SafelyMessageHandler implements MessageHandler {
 	}
 
 	public void setExcepHandlers(List<ExceptionHandler> excepHandlers) {
-		excepHandlers.addAll(excepHandlers);
+		this.excepHandlers.addAll(excepHandlers);
 	}
 
 	public void addExcepHandler(ExceptionHandler excepHandler) {
-		excepHandlers.add(excepHandler);
+		this.excepHandlers.add(excepHandler);
 	}
 
 }

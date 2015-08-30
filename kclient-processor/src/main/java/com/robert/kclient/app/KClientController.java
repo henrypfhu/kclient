@@ -35,8 +35,8 @@ public class KClientController {
 
 	@RequestMapping("/status")
 	public String status() {
-		return "Producer: " + getKClientBoot().getKafkaProducers().size()
-				+ ", Consumer: " + getKClientBoot().getKafkaConsumers().size();
+		return "Handler Number: [" + getKClientBoot().getKafkaHandlers().size()
+				+ "]";
 	}
 
 	@RequestMapping("/restart")
