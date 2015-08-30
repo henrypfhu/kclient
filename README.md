@@ -32,11 +32,11 @@ KClient提供了三种使用方法，对于每一种方法，按照下面的步�
 
 **前置步骤**
 
-1.下载源代码后在项目根目录执行如下命令安装打包文件到你的Maven本地库。
+1).下载源代码后在项目根目录执行如下命令安装打包文件到你的Maven本地库。
 
 > ***mvn install***
 
-2.在你的项目pom.xml文件中添加对KClient的依赖。
+2).在你的项目pom.xml文件中添加对KClient的依赖。
 
 ```xml
 <dependency>
@@ -46,9 +46,9 @@ KClient提供了三种使用方法，对于每一种方法，按照下面的步�
 </dependency>
 ```
 
-3.根据[Kafka官方文档](http://kafka.apache.org/documentation.html)搭建Kafka环境，并创建两个Topic， test1和test2。
+3).根据[Kafka官方文档](http://kafka.apache.org/documentation.html)搭建Kafka环境，并创建两个Topic， test1和test2。
 
-4.然后，从Kafka安装目录的config目录下拷贝kafka-consumer.properties和kafka-producer.properties到你的项目类路径下，通常是src/main/resources目录。
+4).然后，从Kafka安装目录的config目录下拷贝kafka-consumer.properties和kafka-producer.properties到你的项目类路径下，通常是src/main/resources目录。
 
 **1.Java API**
 
@@ -177,7 +177,7 @@ public class DogHandler extends BeanMessageHandler<Dog> {
  
 **3.服务源码注解**
 
-KClient提供了类似Spring声明式的编程方法，使用注解声明Kafka处理器方法，所有的线程模型、异常处理、服务启动和关闭等都由后台服务自动完成，极大程度的简化了API的使用方法，提供了开发者的工作效率。
+KClient提供了类似Spring声明式的编程方法，使用注解声明Kafka处理器方法，所有的线程模型、异常处理、服务启动和关闭等都由后台服务自动完成，极大程度的简化了API的使用方法，提高了开发者的工作效率。
 
 ***注解声明Kafka消息处理器：***
 
@@ -233,19 +233,194 @@ public static void main(String[] args) {
 
 **1.Producer API**
 
-`TODO`
+KafkaProducer类提供了丰富的API来发送不同类型的消息，它支持发送字符串消息，发送一个普通的Bean，以及发送JSON对象等。在这些API中可以指定发送到某个Topic，也可以不指定而使用默认的Topic。对于发送的数据，支持带Key值的消息和不带Key值的消息。
+
+***发送字符串消息****
+
+```java
+public void send(String message);
+public void send2Topic(String topicName, String message); 
+public void send(String key, String message); 
+public void send2Topic(String topicName, String key, String message); 
+public void send(Collection<String> messages); 
+public void send2Topic(String topicName, Collection<String> messages); 
+public void send(Map<String, String> messages); 
+public void send2Topic(String topicName, Map<String, String> messages); 
+```
+
+***发送Bean消息****
+
+```java
+public <T> void sendBean(T bean); 
+public <T> void sendBean2Topic(String topicName, T bean); 
+public <T> void sendBean(String key, T bean); 
+public <T> void sendBean2Topic(String topicName, String key, T bean); 
+public <T> void sendBeans(Collection<T> beans); 
+public <T> void sendBeans2Topic(String topicName, Collection<T> beans); 
+public <T> void sendBeans(Map<String, T> beans); 
+public <T> void sendBeans2Topic(String topicName, Map<String, T> beans);
+```
+
+***发送JSON对象消息****
+
+```java
+public void sendObject(JSONObject jsonObject); 
+public void sendObject2Topic(String topicName, JSONObject jsonObject); 
+public void sendObject(String key, JSONObject jsonObject); 
+public void sendObject2Topic(String topicName, String key, JSONObject jsonObject); 
+public void sendObjects(JSONArray jsonArray); 
+public void sendObjects2Topic(String topicName, JSONArray jsonArray); 
+public void sendObjects(Map<String, JSONObject> jsonObjects); 
+public void sendObjects2Topic(String topicName, Map<String, JSONObject> jsonObjects); 
+```
 
 **2.Consumer API**
 
-`TODO`
+KafkaConsumer类提供了丰富的构造函数用来指定Kafka消费者服务器的各项参数，包括线程池策略，线程池类型，流数量等等。
+
+***使用PROPERTIES文件初始化***
+
+```java
+public KafkaConsumer(String propertiesFile, String topic, int streamNum, MessageHandler handler);
+public KafkaConsumer(String propertiesFile, String topic, int streamNum, int fixedThreadNum, MessageHandler handler);
+public KafkaConsumer(String propertiesFile, String topic, int streamNum, int fixedThreadNum, boolean isSharedThreadPool, MessageHandler handler);
+public KafkaConsumer(String propertiesFile, String topic, int streamNum, int minThreadNum, int maxThreadNum, MessageHandler handler);
+public KafkaConsumer(String propertiesFile, String topic, int streamNum, int minThreadNum, int maxThreadNum, boolean isSharedThreadPool,MessageHandler handler);
+```
+
+***使用PROPERTIES对象初始化*** 
+
+```java
+public KafkaConsumer(Properties properties, String topic, int streamNum, MessageHandler handler);
+public KafkaConsumer(Properties properties, String topic, int streamNum, int fixedThreadNum, MessageHandler handler);
+public KafkaConsumer(Properties properties, String topic, int streamNum, int fixedThreadNum, boolean isSharedThreadPool, MessageHandler handler);
+public KafkaConsumer(Properties properties, String topic, int streamNum, int minThreadNum, int maxThreadNum, MessageHandler handler);
+public KafkaConsumer(Properties properties, String topic, int streamNum, int minThreadNum, int maxThreadNum, boolean isSharedThreadPool,MessageHandler handler);
+```
 
 **3.消息处理器**
 
-`TODO`
+消息处理器结构提供了一个基本接口，并且提供了不同的抽象类实现不同层次的功能，让功能得到最大化的重用，并且互相解偶，开发者可以根据需求选择某一个抽象类来继承和使用。
 
-**4.消息处理器注解和启动**
+***接口定义***
 
-`TODO`
+```java
+public interface MessageHandler {
+	public void execute(String message);
+}
+```
+
+***安全处理异常抽象类***
+
+```java
+public void execute(String message) {
+	try {
+		doExecute(message);
+	} catch (Throwable t) {
+		handleException(t, message);
+	}
+}
+
+protected void handleException(Throwable t, String message) {
+	for (ExceptionHandler excepHandler : excepHandlers) {
+		if (t.getClass() == IllegalStateException.class
+				&& t.getCause() != null
+				&& t.getCause().getClass() == InvocationTargetException.class
+				&& t.getCause().getCause() != null)
+			t = t.getCause().getCause();
+
+		if (excepHandler.support(t)) {
+			try {
+				excepHandler.handle(t, message);
+			} catch (Exception e) {
+				log.error(
+						"Exception hanppens when the handler {} is handling the exception {} and the message {}. Please check if the exception handler is configured properly.",
+						excepHandler.getClass(), t.getClass(), message);
+				log.error(
+						"The stack of the new exception on exception is, ",
+						e);
+			}
+		}
+	}
+
+}
+
+protected abstract void doExecute(String message);
+```
+
+***面向类型的抽象类***
+
+```java
+
+public abstract class BeanMessageHandler<T> extends SafelyMessageHandler {...}
+
+public abstract class BeansMessageHandler<T> extends SafelyMessageHandler {...}
+public abstract class DocumentMessageHandler extends SafelyMessageHandler {...}
+public abstract class ObjectMessageHandler extends SafelyMessageHandler {...}
+public abstract class ObjectsMessageHandler extends SafelyMessageHandler {...}
+```
+
+**4.消息处理器注解**
+
+正如上面使用指南第三部分服务源码注解所讲述的那样，KClient可以通过注解来声明Kafka消息处理器，KClient提供了@KafkaHandlers、@InputConsumer、@OutputProducer和@ErrorHandler等注解。
+
+***@KafkaHandlers***
+
+```java
+@Target({ ElementType.TYPE })
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Component
+public @interface KafkaHandlers {
+}
+```
+
+***@InputConsumer***
+
+```java
+@Target({ ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface InputConsumer {
+	String propertiesFile() default "";
+
+	String topic() default "";
+
+	int streamNum() default 1;
+
+	int fixedThreadNum() default 0;
+
+	int minThreadNum() default 0;
+
+	int maxThreadNum() default 0;
+}
+```
+
+***@OutputProducer***
+
+```java
+@Target({ ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface OutputProducer {
+	String propertiesFile() default "";
+
+	String defaultTopic() default "";
+}
+```
+
+***@ErrorHandler***
+
+```java
+@Target({ ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface ErrorHandler {
+	Class<? extends Throwable> exception() default Throwable.class;
+
+	String topic() default "";
+}
+```
 
 ## 后台监控和管理
 
@@ -320,6 +495,7 @@ Benchmark应该覆盖推送QPS，接收处理QPS以及单线程和多线程生�
 ## TODO
 
 1. KClient处理器项目中管理Rest服务的丰富，增加对线程池的监控，以及消息处理性能的监控。
+2. 让@ErrorHandler里面的exception成为可选，使用方法第一参数进行推测。
 
 ## QQ群/微信公众号
 - <a target="_blank" href="http://shang.qq.com/wpa/qunwpa?idkey=ff0d7d34f32c87dbd9aa56499a7478cd93e0e1d44288b9f6987a043818a1ad01"><img border="0" src="http://pub.idqqimg.com/wpa/images/group.png" alt="云时代网" title="云时代网"></a>
