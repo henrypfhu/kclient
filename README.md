@@ -125,6 +125,13 @@ for (int i = 0; i < 10; i++) {
 }
 ```
 
+```xml
+<bean name="producer" class="com.robert.kafka.kclient.core.KafkaProducer" init-method="init">
+	<property name="propertiesFile" value="kafka-producer.properties"/>
+	<property name="defaultTopic" value="test"/>
+</bean>
+```
+
 ***构建Consumer示例：***
 
 ```java
@@ -156,6 +163,17 @@ public class DogHandler extends BeanMessageHandler<Dog> {
 	}
 }
 ``` 
+ 
+```xml
+<bean name="dogHandler" class="com.robert.kafka.kclient.sample.api.DogHandler" />
+
+<bean name="consumer" class="com.robert.kafka.kclient.core.KafkaConsumer" init-method="init">
+	<property name="propertiesFile" value="kafka-consumer.properties" />
+	<property name="topic" value="test" />
+	<property name="streamNum" value="1" />
+	<property name="handler" ref="dogHandler" />
+</bean>
+```
  
 **3.服务源码注解**
 
