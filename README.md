@@ -28,11 +28,50 @@ KClient是一个简单易用，有效集成，高性能，高稳定的Kafka Java
 
 ## 使用指南
 
-KClient提供了三种使用方法，按照下面的步骤可快速构建Kafka生产者和消费者程序。
+KClient提供了三种使用方法，对于每一种方法，按照下面的步骤可快速构建Kafka生产者和消费者程序。
+
+**前置步骤**
+
+1.下载源代码后在项目根目录执行如下命令安装打包文件到你的Maven本地库。
+
+> ***mvn install***
+
+2.在你的项目pom.xml文件中添加对KClient的依赖。
+
+```xml
+		<dependency>
+			<groupId>com.robert.kafka</groupId>
+			<artifactId>kclient-core</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+```
+
+3. 根据[Kafka官方文档](http://kafka.apache.org/documentation.html)搭建Kafka环境，并创建两个Topic， test1和test2。
+
+4. 然后，从Kafka安装目录的config目录下拷贝kafka-consumer.properties和kafka-producer.properties到你的项目类路径下，通常是src/main/resources目录。
 
 **1.Java API**
 
-`TODO` 
+Java API提供了最直接，最简单的使用KClient的方法。
+
+构建Producer示例：
+
+```java
+		KafkaProducer kafkaProducer = new KafkaProducer(
+				"kafka-producer.properties", "test");
+
+		for (int i = 0; i < 10; i++) {
+			Dog dog = new Dog();
+			dog.setName("Yours " + i);
+			dog.setId(i);
+			kafkaProducer.sendBean2Topic("test", dog);
+
+			System.out.format("Sending dog: %d \n", i + 1);
+
+			Thread.sleep(100);
+		}
+```
+ 
 
 **2.Spring环境集成**
 
