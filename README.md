@@ -57,19 +57,72 @@ Java API提供了最直接，最简单的使用KClient的方法。
 构建Producer示例：
 
 ```java
-		KafkaProducer kafkaProducer = new KafkaProducer(
-				"kafka-producer.properties", "test");
+KafkaProducer kafkaProducer = new KafkaProducer("kafka-producer.properties", "test");
 
-		for (int i = 0; i < 10; i++) {
-			Dog dog = new Dog();
-			dog.setName("Yours " + i);
-			dog.setId(i);
-			kafkaProducer.sendBean2Topic("test", dog);
+for (int i = 0; i < 10; i++) {
+	Dog dog = new Dog();
+	dog.setName("Yours " + i);
+	dog.setId(i);
+	kafkaProducer.sendBean2Topic("test", dog);
 
-			System.out.format("Sending dog: %d \n", i + 1);
+	System.out.format("Sending dog: %d \n", i + 1);
 
-			Thread.sleep(100);
-		}
+	Thread.sleep(100);
+}
+```
+
+构建Consumer示例：
+
+```java
+DogHandler mbe = new DogHandler();
+
+KafkaConsumer kafkaConsumer = new KafkaConsumer("kafka-consumer.properties", "test", 1, mbe);
+try {
+	kafkaConsumer.startup();
+
+	try {
+		System.in.read();
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+} finally {
+	kafkaConsumer.shutdownGracefully();
+}
+ ```
+ 
+```java
+public class DogHandler extends BeanMessageHandler<Dog> {
+	public DogHandler() {
+		super(Dog.class);
+	}
+
+	protected void doExecuteBean(Dog dog) {
+		System.out.format("Receiving dog: %s\n", dog);
+	}
+}
+``` 
+
+**2.Spring环境集成**
+
+KClient可以与Spring环境无缝集成，你可以像使用Spring Bean一样来使用KafkaProducer和KafkaConsumer。
+
+构建Producer示例：
+
+```java
+ApplicationContext ac = new ClassPathXmlApplicationContext("kafka-producer.xml");
+
+KafkaProducer kafkaProducer = (KafkaProducer) ac.getBean("producer");
+
+for (int i = 0; i < 10; i++) {
+	Dog dog = new Dog();
+	dog.setName("Yours " + i);
+	dog.setId(i);
+	kafkaProducer.send2Topic("test", JSON.toJSONString(dog));
+
+	System.out.format("Sending dog: %d \n", i + 1);
+
+	Thread.sleep(100);
+}
 ```
 
 构建Consumer示例：
@@ -103,10 +156,6 @@ public class DogHandler extends BeanMessageHandler<Dog> {
 	}
 }
 ``` 
-
-**2.Spring环境集成**
-
-`TODO`
  
 **3.服务源码注解**
 
