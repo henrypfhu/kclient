@@ -206,7 +206,7 @@ public class AnnotatedDogHandler {
 }
 ```
 
-***注解声明Kafka消息处理器：***
+***注解启动程序：***
 
 ```java
 public static void main(String[] args) {
@@ -221,7 +221,7 @@ public static void main(String[] args) {
 }
 ```
 
-***Spring环境配置：***
+***注解Spring环境配置：***
 
 ```xml
 <bean name="kClientBoot" class="com.robert.kafka.kclient.boot.KClientBoot" init-method="init"/>
@@ -235,7 +235,7 @@ public static void main(String[] args) {
 
 KafkaProducer类提供了丰富的API来发送不同类型的消息，它支持发送字符串消息，发送一个普通的Bean，以及发送JSON对象等。在这些API中可以指定发送到某个Topic，也可以不指定而使用默认的Topic。对于发送的数据，支持带Key值的消息和不带Key值的消息。
 
-***发送字符串消息****
+***发送字符串消息***
 
 ```java
 public void send(String message);
@@ -248,7 +248,7 @@ public void send(Map<String, String> messages);
 public void send2Topic(String topicName, Map<String, String> messages); 
 ```
 
-***发送Bean消息****
+***发送Bean消息***
 
 ```java
 public <T> void sendBean(T bean); 
@@ -261,7 +261,7 @@ public <T> void sendBeans(Map<String, T> beans);
 public <T> void sendBeans2Topic(String topicName, Map<String, T> beans);
 ```
 
-***发送JSON对象消息****
+***发送JSON对象消息***
 
 ```java
 public void sendObject(JSONObject jsonObject); 
