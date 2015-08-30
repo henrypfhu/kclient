@@ -54,7 +54,7 @@ KClient提供了三种使用方法，对于每一种方法，按照下面的步�
 
 Java API提供了最直接，最简单的使用KClient的方法。
 
-***构建Producer示例：***
+*构建Producer示例：*
 
 ```java
 KafkaProducer kafkaProducer = new KafkaProducer("kafka-producer.properties", "test");
@@ -71,7 +71,7 @@ for (int i = 0; i < 10; i++) {
 }
 ```
 
-***构建Consumer示例：***
+*构建Consumer示例：*
 
 ```java
 DogHandler mbe = new DogHandler();
@@ -106,7 +106,7 @@ public class DogHandler extends BeanMessageHandler<Dog> {
 
 KClient可以与Spring环境无缝集成，你可以像使用Spring Bean一样来使用KafkaProducer和KafkaConsumer。
 
-***构建Producer示例：***
+*构建Producer示例：*
 
 ```java
 ApplicationContext ac = new ClassPathXmlApplicationContext("kafka-producer.xml");
@@ -132,7 +132,7 @@ for (int i = 0; i < 10; i++) {
 </bean>
 ```
 
-***构建Consumer示例：***
+*构建Consumer示例：*
 
 ```java
 ApplicationContext ac = new ClassPathXmlApplicationContext(
@@ -179,7 +179,7 @@ public class DogHandler extends BeanMessageHandler<Dog> {
 
 KClient提供了类似Spring声明式的编程方法，使用注解声明Kafka处理器方法，所有的线程模型、异常处理、服务启动和关闭等都由后台服务自动完成，极大程度的简化了API的使用方法，提高了开发者的工作效率。
 
-***注解声明Kafka消息处理器：***
+*注解声明Kafka消息处理器：*
 
 ```java
 @KafkaHandlers
@@ -206,7 +206,7 @@ public class AnnotatedDogHandler {
 }
 ```
 
-***注解启动程序：***
+*注解启动程序：*
 
 ```java
 public static void main(String[] args) {
@@ -221,7 +221,7 @@ public static void main(String[] args) {
 }
 ```
 
-***注解Spring环境配置：***
+*注解Spring环境配置：*
 
 ```xml
 <bean name="kClientBoot" class="com.robert.kafka.kclient.boot.KClientBoot" init-method="init"/>
@@ -235,7 +235,7 @@ public static void main(String[] args) {
 
 KafkaProducer类提供了丰富的API来发送不同类型的消息，它支持发送字符串消息，发送一个普通的Bean，以及发送JSON对象等。在这些API中可以指定发送到某个Topic，也可以不指定而使用默认的Topic。对于发送的数据，支持带Key值的消息和不带Key值的消息。
 
-***发送字符串消息:***
+*发送字符串消息:*
 
 ```java
 public void send(String message);
@@ -248,7 +248,7 @@ public void send(Map<String, String> messages);
 public void send2Topic(String topicName, Map<String, String> messages); 
 ```
 
-***发送Bean消息:***
+*发送Bean消息:*
 
 ```java
 public <T> void sendBean(T bean); 
@@ -261,7 +261,7 @@ public <T> void sendBeans(Map<String, T> beans);
 public <T> void sendBeans2Topic(String topicName, Map<String, T> beans);
 ```
 
-***发送JSON对象消息:***
+*发送JSON对象消息:*
 
 ```java
 public void sendObject(JSONObject jsonObject); 
@@ -278,7 +278,7 @@ public void sendObjects2Topic(String topicName, Map<String, JSONObject> jsonObje
 
 KafkaConsumer类提供了丰富的构造函数用来指定Kafka消费者服务器的各项参数，包括线程池策略，线程池类型，流数量等等。
 
-***使用PROPERTIES文件初始化:***
+*使用PROPERTIES文件初始化:*
 
 ```java
 public KafkaConsumer(String propertiesFile, String topic, int streamNum, MessageHandler handler);
@@ -288,7 +288,7 @@ public KafkaConsumer(String propertiesFile, String topic, int streamNum, int min
 public KafkaConsumer(String propertiesFile, String topic, int streamNum, int minThreadNum, int maxThreadNum, boolean isSharedThreadPool,MessageHandler handler);
 ```
 
-***使用PROPERTIES对象初始化:*** 
+*使用PROPERTIES对象初始化:* 
 
 ```java
 public KafkaConsumer(Properties properties, String topic, int streamNum, MessageHandler handler);
@@ -302,7 +302,7 @@ public KafkaConsumer(Properties properties, String topic, int streamNum, int min
 
 消息处理器结构提供了一个基本接口，并且提供了不同的抽象类实现不同层次的功能，让功能得到最大化的重用，并且互相解偶，开发者可以根据需求选择某一个抽象类来继承和使用。
 
-***接口定义:***
+*接口定义:*
 
 ```java
 public interface MessageHandler {
@@ -310,7 +310,7 @@ public interface MessageHandler {
 }
 ```
 
-***安全处理异常抽象类:***
+*安全处理异常抽象类:*
 
 ```java
 public abstract class SafelyMessageHandler implements MessageHandler {
@@ -349,7 +349,7 @@ public abstract class SafelyMessageHandler implements MessageHandler {
 protected abstract void doExecute(String message);
 ```
 
-***面向类型的抽象类:***
+*面向类型的抽象类:*
 
 ```java
 
@@ -364,7 +364,7 @@ public abstract class ObjectsMessageHandler extends SafelyMessageHandler {...}
 
 正如上面使用指南第三部分服务源码注解所讲述的那样，KClient可以通过注解来声明Kafka消息处理器，KClient提供了@KafkaHandlers、@InputConsumer、@OutputProducer和@ErrorHandler等注解。
 
-***@KafkaHandlers:***
+*@KafkaHandlers:*
 
 ```java
 @Target({ ElementType.TYPE })
@@ -375,7 +375,7 @@ public @interface KafkaHandlers {
 }
 ```
 
-***@InputConsumer:***
+*@InputConsumer:*
 
 ```java
 @Target({ ElementType.METHOD })
@@ -396,7 +396,7 @@ public @interface InputConsumer {
 }
 ```
 
-***@OutputProducer:***
+*@OutputProducer:*
 
 ```java
 @Target({ ElementType.METHOD })
@@ -409,7 +409,7 @@ public @interface OutputProducer {
 }
 ```
 
-***@ErrorHandler:***
+*@ErrorHandler:*
 
 ```java
 @Target({ ElementType.METHOD })
@@ -480,11 +480,11 @@ KClient模板项目提供了后台管理接口来监控和管理消息处理服�
 
 **1.线程模型**
 
-***同步线程模型:***
+*同步线程模型:*
 
 在这种线程模型中，客户端为每一个消费者流使用一个线程，每个线程负责从Kafka队列里消费消息，并且在同一个线程里进行业务处理。我们把这些线程称为消费线程，把这些线程所在的线程池叫做消息消费线程池。这种模型之所以在消息消费线程池处理业务，是因为它多用于处理轻量级别的业务，例如：缓存查询，本地计算等。
 
-***异步线程模型:***
+*异步线程模型:*
 
 在这种线程模型中，客户端为每一个消费者流使用一个线程，每个线程负责从Kafka队列里消费消息，并且传递消费得到的消息到后端的异步线程池，在异步线程池中处理业务。我们仍然把前面负责消费消息的线程池成为消息消费线程池，把后面的异步线程池成为异步业务线程池。这种线程模型适合重量级的业务，例如：业务中有大量的IO操作，网络IO操作，复杂计算，对外部系统的调用等。
 
@@ -498,7 +498,7 @@ KClient模板项目提供了后台管理接口来监控和管理消息处理服�
 
 **2.异常处理**
 
-***消息处理产生的业务异常:***
+*消息处理产生的业务异常:*
 
 当前在业务处理的上层捕捉了Throwable, 在专用的错误恢复日志中记录出错的消息，后续可根据错误恢复日志人工处理错误消息，也可重做或者洗数据。`TODO：`考虑实现异常Listener体系结构, 对异常处理实现监听者模式，异常处理器可插拔等，默认打印错误日志。
 
@@ -510,11 +510,11 @@ KClient模板项目提供了后台管理接口来监控和管理消息处理服�
 
 优雅关机的重点在于：1. 如何知道JVM要退出; 2. 如何阻止Daemon的线程在JVM退出被杀掉而导致消息丢失; 3. 如果Worker线程在阻塞，如何唤起并退出。  
 
-***第一个问题:***，如果一个后台程序运行在控制台的前台，通过`Ctrl + C`可以发送退出信号给JVM，也可以通过`kill -2 PS_IS` 或者 `kill -15 PS_IS`发送退出信号，但是不能发送`kill -9 PS_IS`, 否则进程会无条件强制退出。JVM收到退出信号后，会调用注册的钩子，我们通过的注册的JVM退出钩子进行优雅关机。
+*第一个问题:*，如果一个后台程序运行在控制台的前台，通过`Ctrl + C`可以发送退出信号给JVM，也可以通过`kill -2 PS_IS` 或者 `kill -15 PS_IS`发送退出信号，但是不能发送`kill -9 PS_IS`, 否则进程会无条件强制退出。JVM收到退出信号后，会调用注册的钩子，我们通过的注册的JVM退出钩子进行优雅关机。
 
-***第二个问题:***，线程分为Daemon线程和非Daemon线程，一个线程默认继承父线程的Daemon属性，如果当前线程池是由Daemon线程创建的，则Worker线程是Daemon线程。如果Worker线程是Daemon线程，我们需要在JVM退出钩子中等待Worker线程完成当前手头处理的消息，再退出JVM。如果不是Daemon线程，即使JVM收到退出信号，也得等待Worker线程退出后再退出，不会丢掉正在处理的消息。
+*第二个问题:*，线程分为Daemon线程和非Daemon线程，一个线程默认继承父线程的Daemon属性，如果当前线程池是由Daemon线程创建的，则Worker线程是Daemon线程。如果Worker线程是Daemon线程，我们需要在JVM退出钩子中等待Worker线程完成当前手头处理的消息，再退出JVM。如果不是Daemon线程，即使JVM收到退出信号，也得等待Worker线程退出后再退出，不会丢掉正在处理的消息。
 
-***第三个问题:***，在Worker线程从Kafka服务器消费消息的时候，Worker线程可能处于阻塞，这时需要中断线程以退出，没有消息被丢掉。在Worker线程处理业务时有可能有阻塞，例如：IO，网络IO，在指定退出时间内没有完成，我们也需要中断线程退出，这时会产生一个InterruptedException, 在异常处理的默认处理器中被捕捉，并写入错误日志，Worker线程随后退出。
+*第三个问题:*，在Worker线程从Kafka服务器消费消息的时候，Worker线程可能处于阻塞，这时需要中断线程以退出，没有消息被丢掉。在Worker线程处理业务时有可能有阻塞，例如：IO，网络IO，在指定退出时间内没有完成，我们也需要中断线程退出，这时会产生一个InterruptedException, 在异常处理的默认处理器中被捕捉，并写入错误日志，Worker线程随后退出。
 
 ## 性能压测
 
@@ -522,10 +522,10 @@ KClient模板项目提供了后台管理接口来监控和管理消息处理服�
 
 Benchmark应该覆盖推送QPS，接收处理QPS以及单线程和多线程生产者的用例。
 
-***用例1：*** 轻量级服务同步线程模型和异步线程模型的性能对比。
-***用例2：*** 重量级服务同步线程模型和异步线程模型的性能对比。
-***用例3：*** 重量级服务异步线程模型中所有消费者流共享线程池和每个流独享线程池的性能对比。
-***用例4：*** 重量级服务异步线程模型中每个流独享线程池的对比的确定数量线程的线程池和线程数量可伸缩的线程池的性能对比。
+*用例1：* 轻量级服务同步线程模型和异步线程模型的性能对比。
+*用例2：* 重量级服务同步线程模型和异步线程模型的性能对比。
+*用例3：* 重量级服务异步线程模型中所有消费者流共享线程池和每个流独享线程池的性能对比。
+*用例4：* 重量级服务异步线程模型中每个流独享线程池的对比的确定数量线程的线程池和线程数量可伸缩的线程池的性能对比。
 
 ## TODO
 
