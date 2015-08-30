@@ -39,11 +39,11 @@ KClient提供了三种使用方法，对于每一种方法，按照下面的步�
 2.在你的项目pom.xml文件中添加对KClient的依赖。
 
 ```xml
-		<dependency>
-			<groupId>com.robert.kafka</groupId>
-			<artifactId>kclient-core</artifactId>
-			<version>0.0.1</version>
-		</dependency>
+<dependency>
+	<groupId>com.robert.kafka</groupId>
+	<artifactId>kclient-core</artifactId>
+	<version>0.0.1</version>
+</dependency>
 ```
 
 3.根据[Kafka官方文档](http://kafka.apache.org/documentation.html)搭建Kafka环境，并创建两个Topic， test1和test2。
@@ -54,7 +54,7 @@ KClient提供了三种使用方法，对于每一种方法，按照下面的步�
 
 Java API提供了最直接，最简单的使用KClient的方法。
 
-构建Producer示例：
+***构建Producer示例：***
 
 ```java
 KafkaProducer kafkaProducer = new KafkaProducer("kafka-producer.properties", "test");
@@ -71,7 +71,7 @@ for (int i = 0; i < 10; i++) {
 }
 ```
 
-构建Consumer示例：
+***构建Consumer示例：***
 
 ```java
 DogHandler mbe = new DogHandler();
@@ -106,7 +106,7 @@ public class DogHandler extends BeanMessageHandler<Dog> {
 
 KClient可以与Spring环境无缝集成，你可以像使用Spring Bean一样来使用KafkaProducer和KafkaConsumer。
 
-构建Producer示例：
+***构建Producer示例：***
 
 ```java
 ApplicationContext ac = new ClassPathXmlApplicationContext("kafka-producer.xml");
@@ -125,24 +125,24 @@ for (int i = 0; i < 10; i++) {
 }
 ```
 
-构建Consumer示例：
+***构建Consumer示例：***
 
 ```java
-		DogHandler mbe = new DogHandler();
+ApplicationContext ac = new ClassPathXmlApplicationContext(
+		"kafka-consumer.xml");
 
-		KafkaConsumer kafkaConsumer = new KafkaConsumer(
-				"kafka-consumer.properties", "test", 1, mbe);
-		try {
-			kafkaConsumer.startup();
+KafkaConsumer kafkaConsumer = (KafkaConsumer) ac.getBean("consumer");
+try {
+	kafkaConsumer.startup();
 
-			try {
-				System.in.read();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} finally {
-			kafkaConsumer.shutdownGracefully();
-		}
+	try {
+		System.in.read();
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+} finally {
+	kafkaConsumer.shutdownGracefully();
+}
  ```
  
 ```java
