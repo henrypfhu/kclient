@@ -422,13 +422,59 @@ public @interface ErrorHandler {
 }
 ```
 
-## 后台监控和管理
-
-`TODO`
-
 ## 消息处理机模板项目
 
-`TODO`
+### 快速开发向导
+
+通过下面步骤可以快速开发Kafka处理机服务。
+
+1.从本项目下载kclient-processor项目模板，并且根据业务需要修改pom.xml后导入Eclipse。
+
+2.根据业务需要更改com.robert.kclient.app.handler.AnimalsHandler类名称，并且根据业务需要修改处理器的注解。这里，可以导入业务服务对消息进行处理。
+
+```java
+@KafkaHandlers
+public class AnimalsHandler {
+	@InputConsumer(propertiesFile = "kafka-consumer.properties", topic = "test", streamNum = 1)
+	@OutputProducer(propertiesFile = "kafka-producer.properties", defaultTopic = "test1")
+	public Cat dogHandler(Dog dog) {
+		System.out.println("Annotated dogHandler handles: " + dog);
+
+		return new Cat(dog);
+	}
+
+	@InputConsumer(propertiesFile = "kafka-consumer.properties", topic = "test1", streamNum = 1)
+	public void catHandler(Cat cat) throws IOException {
+		System.out.println("Annotated catHandler handles: " + cat);
+
+		throw new IOException("Man made exception.");
+	}
+
+	@ErrorHandler(exception = IOException.class, topic = "test1")
+	public void ioExceptionHandler(IOException e, String message) {
+		System.out.println("Annotated excepHandler handles: " + e);
+	}
+}
+``` 
+3.通过`mvn package`既可以打包包含Spring Boot功能的自启动jar包。
+
+4.通过`java -jar kclient-processor.jar`即可启动服务。
+
+### 后台监控和管理
+
+KClient模板项目提供了后台管理接口来监控和管理消息处理服务。
+
+1.欢迎词 - 用来校验服务是否启动成功。
+
+>curl http://localhost:8080/
+
+2.服务状态 - 显示处理器数量。
+
+>curl http://localhost:8080/status
+
+3.重启服务 - 重新启动服务。
+
+>curl http://localhost:8080/status
 
 ## 架构设计
 
@@ -472,30 +518,20 @@ public @interface ErrorHandler {
 
 ## 性能压测
 
-用例1： 轻量级服务同步线程模型和异步线程模型的性能对比。
-
-`TODO`
-
-用例2： 重量级服务同步线程模型和异步线程模型的性能对比。
-
-`TODO`
-
-用例3： 重量级服务异步线程模型中所有消费者流共享线程池和每个流独享线程池的性能对比。
-
-`TODO`
-
-用例4： 重量级服务异步线程模型中每个流独享线程池的对比的确定数量线程的线程池和线程数量可伸缩的线程池的性能对比。
-
-`TODO`
+`TODO` 
 
 Benchmark应该覆盖推送QPS，接收处理QPS以及单线程和多线程生产者的用例。
 
-`TODO`
+用例1： 轻量级服务同步线程模型和异步线程模型的性能对比。
+用例2： 重量级服务同步线程模型和异步线程模型的性能对比。
+用例3： 重量级服务异步线程模型中所有消费者流共享线程池和每个流独享线程池的性能对比。
+用例4： 重量级服务异步线程模型中每个流独享线程池的对比的确定数量线程的线程池和线程数量可伸缩的线程池的性能对比。
 
 ## TODO
 
 1. KClient处理器项目中管理Rest服务的丰富，增加对线程池的监控，以及消息处理性能的监控。
 2. 让@ErrorHandler里面的exception成为可选，使用方法第一参数进行推测。
+3. 给模板项目增加启动和关闭脚本。
 
 ## QQ群/微信公众号
 - <a target="_blank" href="http://shang.qq.com/wpa/qunwpa?idkey=ff0d7d34f32c87dbd9aa56499a7478cd93e0e1d44288b9f6987a043818a1ad01"><img border="0" src="http://pub.idqqimg.com/wpa/images/group.png" alt="云时代网" title="云时代网"></a>
