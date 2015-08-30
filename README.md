@@ -71,7 +71,38 @@ Java API提供了最直接，最简单的使用KClient的方法。
 			Thread.sleep(100);
 		}
 ```
+
+构建Consumer示例：
+
+```java
+		DogHandler mbe = new DogHandler();
+
+		KafkaConsumer kafkaConsumer = new KafkaConsumer(
+				"kafka-consumer.properties", "test", 1, mbe);
+		try {
+			kafkaConsumer.startup();
+
+			try {
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} finally {
+			kafkaConsumer.shutdownGracefully();
+		}
+ ```
  
+```java
+public class DogHandler extends BeanMessageHandler<Dog> {
+	public DogHandler() {
+		super(Dog.class);
+	}
+
+	protected void doExecuteBean(Dog dog) {
+		System.out.format("Receiving dog: %s\n", dog);
+	}
+}
+``` 
 
 **2.Spring环境集成**
 
