@@ -435,11 +435,13 @@ public class KafkaConsumer {
 						log.info(
 								"The worker [Thread ID: {}] has been interrupted when retrieving messages from kafka broker. Maybe the consumer is shutting down.",
 								Thread.currentThread().getId());
+						log.error("Retrieve Interrupted: ", e);
 						break;
 					} else {
 						log.error(
 								"The worker [Thread ID: {}] encounters an unknown exception when retrieving messages from kafka broker. Now try again.",
 								Thread.currentThread().getId());
+						log.error("Retrieve Error: ", e);
 						continue;
 					}
 				}
