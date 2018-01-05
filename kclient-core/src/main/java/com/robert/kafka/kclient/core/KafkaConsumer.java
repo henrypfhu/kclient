@@ -286,6 +286,8 @@ public class KafkaConsumer {
 			throw new IllegalStateException("The client has been started.");
 		}
 
+		status = Status.RUNNING;
+
 		log.info("Streams num: " + streams.size());
 		tasks = new ArrayList<AbstractMessageTask>();
 		for (KafkaStream<String, String> stream : streams) {
@@ -295,8 +297,6 @@ public class KafkaConsumer {
 			tasks.add(abstractMessageTask);
 			streamThreadPool.execute(abstractMessageTask);
 		}
-
-		status = Status.RUNNING;
 	}
 
 	public void shutdownGracefully() {

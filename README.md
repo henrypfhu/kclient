@@ -536,6 +536,7 @@ Benchmark应该覆盖推送QPS，接收处理QPS以及单线程和多线程生�
 5. 实现消息发送端的可靠投递，在发送超时的时候，持久到数据库或者缓存，定时补偿发送
 6. 实现Producer可以持久消息到数据库，有问题的时候，异步定时重发
 7. InputConsumer和OutputProducer中的propertiesFile有些多余，我们需要把它迁移到KafkaHandlers中，或者支持多个地方配置。
+8. InterruptedException和优雅关机的实现，不应该接受一个interrupt信号就退出
 
 ## 获得技术支持
 
