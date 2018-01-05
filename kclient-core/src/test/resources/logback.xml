@@ -7,7 +7,7 @@
 	<contextName>kclient</contextName>
 
 	<!--日志路径 -->
-	<property name="logback.logs.path" value="/home/robert/logs/" />
+	<property name="logback.logs.path" value="/Users/robert/logs/" />
 	<!--项目名 -->
 	<property name="logback.project.name" value="kclient" />
 	<!--日志文件名的日期格式 -->
