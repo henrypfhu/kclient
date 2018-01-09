@@ -424,6 +424,7 @@ public class KafkaConsumer {
 			while (status == Status.RUNNING) {
 				boolean hasNext = false;
 				try {
+					// When it is interrupted if process is killed, it causes some duplicate message processing, because it commits the message in a chunk every 30 seconds
 					hasNext = it.hasNext();
 				} catch (Exception e) {
 					// hasNext() method is implemented by scala, so no checked
@@ -469,8 +470,9 @@ public class KafkaConsumer {
 
 		protected void shutdown() {
 
-			// Actually it doesn't work, because kafka v0.8 commits once per 30 seconds, so it is bound to consume duplicate messages.
+			// Actually it doesn't work in auto commit mode, because kafka v0.8 commits once per 30 seconds, so it is bound to consume duplicate messages.
 			stream.clear();
+
 		}
 
 		protected abstract void handleMessage(String message);
