@@ -236,7 +236,7 @@ public class KClientBoot implements ApplicationContextAware {
 					} catch (IllegalAccessException e) {
 						// If annotated exception handler is correct, this won't
 						// happen
-						log.debug(
+						log.error(
 								"No permission to access the annotated exception handler.",
 								e);
 						throw new IllegalStateException(
@@ -245,7 +245,7 @@ public class KClientBoot implements ApplicationContextAware {
 					} catch (IllegalArgumentException e) {
 						// If annotated exception handler is correct, this won't
 						// happen
-						log.debug(
+						log.error(
 								"The parameter passed in doesn't match the annotated exception handler's.",
 								e);
 						throw new IllegalStateException(
@@ -255,7 +255,7 @@ public class KClientBoot implements ApplicationContextAware {
 						// If the exception during handling exception occurs,
 						// throw it, in SafelyMessageHandler, this will be
 						// processed
-						log.debug(
+						log.error(
 								"Failed to call the annotated exception handler.",
 								e);
 						throw new IllegalStateException(
@@ -393,13 +393,13 @@ public class KClientBoot implements ApplicationContextAware {
 			}
 		} catch (IllegalAccessException e) {
 			// If annotated config is correct, this won't happen
-			log.debug("No permission to access the annotated kafka handler.", e);
+			log.error("No permission to access the annotated kafka handler.", e);
 			throw new IllegalStateException(
 					"No permission to access the annotated kafka handler. Please check annotated config.",
 					e);
 		} catch (IllegalArgumentException e) {
 			// If annotated config is correct, this won't happen
-			log.debug(
+			log.error(
 					"The parameter passed in doesn't match the annotated kafka handler's.",
 					e);
 			throw new IllegalStateException(
@@ -408,7 +408,7 @@ public class KClientBoot implements ApplicationContextAware {
 		} catch (InvocationTargetException e) {
 			// The SafeMessageHanlder has already handled the
 			// throwable, no more exception goes here
-			log.debug("Failed to call the annotated kafka handler.", e);
+			log.error("Failed to call the annotated kafka handler.", e);
 			throw new IllegalStateException(
 					"Failed to call the annotated kafka handler. Please check if the handler can handle the biz without any exception.",
 					e);
