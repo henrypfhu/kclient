@@ -535,7 +535,7 @@ Benchmark应该覆盖推送QPS，接收处理QPS以及单线程和多线程生�
 4. 给模板项目增加启动和关闭脚本。
 5. 实现消息发送端的可靠投递，在发送超时的时候，持久到数据库或者缓存，定时补偿发送，也就是实现Producer可以持久消息到数据库，有问题的时候，异步定时重发
 6. InputConsumer和OutputProducer中的propertiesFile有些多余，我们需要把它迁移到KafkaHandlers中，或者支持多个地方配置，或者支持具体每个属性在方法中的配置。
-7. InterruptedException和优雅关机的实现，优化关机的实现还不健全，it.hasNext()退出后，最后一个chunk没有被提交。
+7. InterruptedException和优雅关机的实现，优化关机的实现还不健全，it.hasNext()退出后，最后一个chunk没有被提交, Kafka0.8版本提交默认是30秒一次的,读出来没提交很正常
 
 ## 获得技术支持
 

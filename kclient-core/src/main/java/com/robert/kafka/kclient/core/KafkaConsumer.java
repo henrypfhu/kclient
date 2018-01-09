@@ -468,6 +468,8 @@ public class KafkaConsumer {
 		}
 
 		protected void shutdown() {
+
+			// Actually it doesn't work, because kafka v0.8 commits once per 30 seconds, so it is bound to consume duplicate messages.
 			stream.clear();
 		}
 
