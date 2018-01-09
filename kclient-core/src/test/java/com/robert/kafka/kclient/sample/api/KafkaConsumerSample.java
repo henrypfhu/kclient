@@ -24,10 +24,12 @@ public class KafkaConsumerSample {
 
 			try {
 				System.in.read();
+				System.out.println("Read the exit command.");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} finally {
+			System.out.println("Start to exit...");
 			kafkaConsumer.shutdownGracefully();
 		}
 	}

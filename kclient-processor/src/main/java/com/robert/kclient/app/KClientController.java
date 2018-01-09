@@ -39,6 +39,18 @@ public class KClientController {
 				+ "]";
 	}
 
+	@RequestMapping("/stop")
+	public String stop() {
+		log.info("Shutdowning KClient now...");
+		getKClientBoot().shutdownAll();
+
+		String startupTime = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss z")
+				.format(new Date(ctxKafkaProcessor.getStartupDate()));
+		log.info("KClient application stops at: " + startupTime);
+
+		return "KClient application stops at: " + startupTime;
+	}
+
 	@RequestMapping("/restart")
 	public String restart() {
 		log.info("Shutdowning KClient now...");

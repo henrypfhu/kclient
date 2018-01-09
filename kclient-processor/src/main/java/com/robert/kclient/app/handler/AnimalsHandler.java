@@ -26,6 +26,7 @@ public class AnimalsHandler {
 		return new Cat(dog);
 	}
 
+
 	@InputConsumer(propertiesFile = "kafka-consumer.properties", topic = "test1", streamNum = 1)
 	public void catHandler(Cat cat) throws IOException {
 		System.out.println("Annotated catHandler handles: " + cat);

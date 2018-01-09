@@ -533,10 +533,9 @@ Benchmark应该覆盖推送QPS，接收处理QPS以及单线程和多线程生�
 2. KClient处理器项目中管理Rest服务的丰富，增加对线程池的监控，以及消息处理性能的监控。
 3. 让@ErrorHandler里面的exception成为可选，使用方法第一参数进行推测。
 4. 给模板项目增加启动和关闭脚本。
-5. 实现消息发送端的可靠投递，在发送超时的时候，持久到数据库或者缓存，定时补偿发送
-6. 实现Producer可以持久消息到数据库，有问题的时候，异步定时重发
-7. InputConsumer和OutputProducer中的propertiesFile有些多余，我们需要把它迁移到KafkaHandlers中，或者支持多个地方配置。
-8. InterruptedException和优雅关机的实现，不应该接受一个interrupt信号就退出
+5. 实现消息发送端的可靠投递，在发送超时的时候，持久到数据库或者缓存，定时补偿发送，也就是实现Producer可以持久消息到数据库，有问题的时候，异步定时重发
+6. InputConsumer和OutputProducer中的propertiesFile有些多余，我们需要把它迁移到KafkaHandlers中，或者支持多个地方配置，或者支持具体每个属性在方法中的配置。
+7. InterruptedException和优雅关机的实现，优化关机的实现还不健全，it.hasNext()退出后，最后一个chunk没有被提交。
 
 ## 获得技术支持
 
